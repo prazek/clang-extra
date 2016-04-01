@@ -40,6 +40,7 @@
 #include "UnusedAliasDeclsCheck.h"
 #include "UnusedParametersCheck.h"
 #include "UnusedRAIICheck.h"
+#include "UseBoolLiteralsCheck.h"
 #include "VirtualNearMissCheck.h"
 
 namespace clang {
@@ -106,6 +107,8 @@ public:
     CheckFactories.registerCheck<UnusedParametersCheck>(
         "misc-unused-parameters");
     CheckFactories.registerCheck<UnusedRAIICheck>("misc-unused-raii");
+    CheckFactories.registerCheck<UseBoolLiteralsCheck>(
+        "misc-use-bool-literals");
     CheckFactories.registerCheck<VirtualNearMissCheck>(
         "misc-virtual-near-miss");
   }

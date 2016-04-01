@@ -108,6 +108,11 @@ identified.  The improvements since the 3.8 release include:
   Finds most instances of stray semicolons that unexpectedly alter the meaning
   of the code.
 
+- New `misc-use-bool-literals
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-use-bool-literals.html>`_ check
+
+  Finds integer literals, which are implicitly casted to bool.
+
 - New `modernize-deprecated-headers
   <http://clang.llvm.org/extra/clang-tidy/checks/modernize-deprecated-headers.html>`_ check
 
