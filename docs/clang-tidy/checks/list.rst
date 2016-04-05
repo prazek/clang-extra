@@ -100,6 +100,7 @@ Clang-Tidy Checks
    modernize-replace-auto-ptr
    modernize-shrink-to-fit
    modernize-use-auto
+   modernize-use-bool-literals
    modernize-use-default
    modernize-use-nullptr
    modernize-use-override
