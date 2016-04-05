@@ -75,6 +75,7 @@ Clang-Tidy Checks
    misc-unused-alias-decls
    misc-unused-parameters
    misc-unused-raii
+   misc-use-bool-literals
    misc-virtual-near-miss
    modernize-deprecated-headers
    modernize-loop-convert
