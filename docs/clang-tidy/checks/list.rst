@@ -125,6 +125,7 @@ Clang-Tidy Checks
    misc-virtual-near-miss
    modernize-avoid-bind
    modernize-deprecated-headers
+   modernize-increment-bool
    modernize-loop-convert
    modernize-make-shared
    modernize-make-unique

@@ -12,6 +12,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "AvoidBindCheck.h"
 #include "DeprecatedHeadersCheck.h"
+#include "IncrementBoolCheck.h"
 #include "LoopConvertCheck.h"
 #include "MakeSharedCheck.h"
 #include "MakeUniqueCheck.h"
@@ -47,6 +48,8 @@ public:
     CheckFactories.registerCheck<AvoidBindCheck>("modernize-avoid-bind");
     CheckFactories.registerCheck<DeprecatedHeadersCheck>(
         "modernize-deprecated-headers");
+    CheckFactories.registerCheck<IncrementBoolCheck>(
+        "modernize-increment-bool");
     CheckFactories.registerCheck<LoopConvertCheck>("modernize-loop-convert");
     CheckFactories.registerCheck<MakeSharedCheck>("modernize-make-shared");
     CheckFactories.registerCheck<MakeUniqueCheck>("modernize-make-unique");
