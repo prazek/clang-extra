@@ -2,6 +2,7 @@ set(LLVM_LINK_COMPONENTS support)
 
 add_clang_library(clangTidyModernizeModule
   DeprecatedHeadersCheck.cpp
+  IncrementBoolCheck.cpp
   LoopConvertCheck.cpp
   LoopConvertUtils.cpp
   MakeSmartPtrCheck.cpp
