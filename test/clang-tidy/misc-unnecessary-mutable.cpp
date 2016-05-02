@@ -41,7 +41,7 @@ private:
 struct PrivateInStruct {
 private:
   mutable volatile unsigned long long blah;
-  // CHECK-MESSAGES: :[[@LINE-1]]:39: warning: 'mutable' modifier is unnecessary for field 'blah' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:39: warning: 'mutable' modifier is unnecessary for field 'blah' {{..}}
   // CHECK-FIXES: {{^  }}volatile unsigned long long blah;
 };
 
@@ -58,7 +58,7 @@ private:
 class UnusedVar {
 private:
   mutable int x __attribute__((unused));
-  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'x' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'x' {{..}}
   // CHECK-FIXES: {{^  }}int x __attribute__((unused));
 };
 
@@ -79,7 +79,7 @@ public:
 private:
   const int field3;
   mutable NothingMutable field4;
-  // CHECK-MESSAGES: :[[@LINE-1]]:26: warning: 'mutable' modifier is unnecessary for field 'field4' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:26: warning: 'mutable' modifier is unnecessary for field 'field4' {{..}}
   // CHECK-FIXES: {{^  }}NothingMutable field4;
 };
 
@@ -87,11 +87,11 @@ private:
 class ConstMethods {
 private:
   mutable int field1, field2;
-  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 'mutable' modifier is unnecessary for field 'field2' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 'mutable' modifier is unnecessary for field 'field2' {{..}}
   mutable int incr, decr, set, mul, constArg1, constArg2, constRef, ref1, ref2;
-  // CHECK-MESSAGES: :[[@LINE-1]]:37: warning: 'mutable' modifier is unnecessary for field 'constArg1' [misc-unnecessary-mutable]
-  // CHECK-MESSAGES: :[[@LINE-2]]:48: warning: 'mutable' modifier is unnecessary for field 'constArg2' [misc-unnecessary-mutable]
-  // CHECK-MESSAGES: :[[@LINE-3]]:59: warning: 'mutable' modifier is unnecessary for field 'constRef' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:37: warning: 'mutable' modifier is unnecessary for field 'constArg1' {{..}}
+  // CHECK-MESSAGES: :[[@LINE-2]]:48: warning: 'mutable' modifier is unnecessary for field 'constArg2' {{..}}
+  // CHECK-MESSAGES: :[[@LINE-3]]:59: warning: 'mutable' modifier is unnecessary for field 'constRef' {{..}}
 
   void takeArg(int x) const { x *= 4; }
   int takeConstRef(const int& x) const { return x + 99; }
@@ -128,7 +128,7 @@ protected:
 
 private:
   mutable int fPrivate;
-  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'fPrivate' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'fPrivate' {{..}}
   // CHECK-FIXES: {{^  }}int fPrivate;
 };
 
@@ -139,12 +139,12 @@ public:
 
 protected:
   mutable int fProtected;
-  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'fProtected' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'fProtected' {{..}}
   // CHECK-FIXES: {{^  }}int fProtected;
 
 private:
   mutable int fPrivate;
-  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'fPrivate' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'fPrivate' {{..}}
   // CHECK-FIXES: {{^  }}int fPrivate;
 };
 
@@ -155,7 +155,7 @@ class NotAllFuncsKnown {
 
 private:
   mutable int field;
-  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'field' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'field' {{..}}
   // CHECK-FIXES: {{^  }}int field;
 };
 
@@ -177,7 +177,7 @@ class ConstFuncOutside {
 
 private:
   mutable int field;
-  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'field' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'field' {{..}}
   // CHECK-FIXES: {{^  }}int field;
 };
 
@@ -216,8 +216,8 @@ public:
 
 private:
   mutable int a, b, c, d;
-  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: 'mutable' modifier is unnecessary for field 'c' [misc-unnecessary-mutable]
-  // CHECK-MESSAGES: :[[@LINE-2]]:24: warning: 'mutable' modifier is unnecessary for field 'd' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: 'mutable' modifier is unnecessary for field 'c' {{..}}
+  // CHECK-MESSAGES: :[[@LINE-2]]:24: warning: 'mutable' modifier is unnecessary for field 'd' {{..}}
 };
 
 
@@ -231,7 +231,33 @@ public:
 private:
   mutable int a;
   mutable double b;
-  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 'mutable' modifier is unnecessary for field 'b' [misc-unnecessary-mutable]
+  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 'mutable' modifier is unnecessary for field 'b' {{..}}
   // CHECK_FIXES: {{^  }}double b;
 };
+
+struct MutableNotFirst {
+private:
+    long mutable long abc = 42;
+  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 'mutable' modifier is unnecessary for field 'abc' {{..}}
+  // CHECK_FIXES: {{^  }}long long abc;
+    long long mutable bca;
+  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 'mutable' modifier is unnecessary for field 'bca' {{..}}
+  // CHECK_FIXES: {{^  }}long long bca;
+    int mutable ca;
+  // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: 'mutable' modifier is unnecessary for field 'ca' {{..}}
+  // CHECK_FIXES: {{^  }}int ca;
+};
+
+void change(const int &a) {
+    const_cast<int&>(a) = 42;
+}
+
+struct Change {
+    void changeMember() const {
+        change(m);
+    }
+private:
+    mutable int m;        
+};
+
 
