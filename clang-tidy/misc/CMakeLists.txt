@@ -46,6 +46,7 @@ add_clang_library(clangTidyMiscModule
   ThrowWithNoexceptCheck.cpp
   UndelegatedConstructor.cpp
   UniqueptrResetReleaseCheck.cpp
+  UnnecessaryMutableCheck.cpp
   UnusedAliasDeclsCheck.cpp
   UnusedParametersCheck.cpp
   UnusedRAIICheck.cpp

@@ -116,6 +116,7 @@ Clang-Tidy Checks
    misc-unconventional-assign-operator
    misc-undelegated-constructor
    misc-uniqueptr-reset-release
+   misc-unnecessary-mutable
    misc-unused-alias-decls
    misc-unused-parameters
    misc-unused-raii
