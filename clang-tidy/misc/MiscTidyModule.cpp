@@ -45,6 +45,7 @@
 #include "ThrowByValueCatchByReferenceCheck.h"
 #include "UndelegatedConstructor.h"
 #include "UniqueptrResetReleaseCheck.h"
+#include "UnnecessaryMutableCheck.h"
 #include "UnusedAliasDeclsCheck.h"
 #include "UnusedParametersCheck.h"
 #include "UnusedRAIICheck.h"
@@ -126,6 +127,8 @@ public:
         "misc-undelegated-constructor");
     CheckFactories.registerCheck<UniqueptrResetReleaseCheck>(
         "misc-uniqueptr-reset-release");
+    CheckFactories.registerCheck<UnnecessaryMutableCheck>(
+        "misc-unnecessary-mutable");
     CheckFactories.registerCheck<UnusedAliasDeclsCheck>(
         "misc-unused-alias-decls");
     CheckFactories.registerCheck<UnusedParametersCheck>(
