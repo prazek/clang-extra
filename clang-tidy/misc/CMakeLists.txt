@@ -37,6 +37,7 @@ add_clang_library(clangTidyMiscModule
   ThrowByValueCatchByReferenceCheck.cpp
   UndelegatedConstructor.cpp
   UniqueptrResetReleaseCheck.cpp
+  UnnecessaryMutableCheck.cpp
   UnusedAliasDeclsCheck.cpp
   UnusedParametersCheck.cpp
   UnusedRAIICheck.cpp
