@@ -10,6 +10,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "ReturningTypeCheck.h"
 
 #include "FasterStringFindCheck.h"
 #include "ForRangeCopyCheck.h"
@@ -30,6 +31,8 @@ public:
         "performance-for-range-copy");
     CheckFactories.registerCheck<ImplicitCastInLoopCheck>(
         "performance-implicit-cast-in-loop");
+    CheckFactories.registerCheck<ReturningTypeCheck>(
+        "performance-returning-type");
     CheckFactories.registerCheck<UnnecessaryCopyInitialization>(
         "performance-unnecessary-copy-initialization");
     CheckFactories.registerCheck<UnnecessaryValueParamCheck>(

@@ -111,6 +111,7 @@ Clang-Tidy Checks
    performance-faster-string-find
    performance-for-range-copy
    performance-implicit-cast-in-loop
+   performance-returning-type
    performance-unnecessary-copy-initialization
    performance-unnecessary-value-param
    readability-avoid-const-params-in-decls

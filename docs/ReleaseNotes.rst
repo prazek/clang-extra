@@ -242,6 +242,14 @@ identified.  The improvements since the 3.8 release include:
   Warns about range-based loop with a loop variable of const ref type where the
   type of the variable does not match the one returned by the iterator.
 
+- New `performance-returning-type
+  <http://clang.llvm.org/extra/clang-tidy/checks/performance-returning-type.html>`_ check
+
+  This check finds places where we are returning object of a different type than
+  the function return type. In such places, we should use std::move, otherwise
+  the object will not be moved automatically.
+  Check adds std::move if it could be beneficial.
+
 - New `performance-unnecessary-value-param
   <http://clang.llvm.org/extra/clang-tidy/checks/performance-unnecessary-value-param.html>`_ check
 
