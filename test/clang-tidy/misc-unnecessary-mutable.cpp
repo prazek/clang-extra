@@ -250,7 +250,6 @@ private:
   // CHECK_FIXES: {{^  }}int ca;
 };
 
-
 // Fails for now.
 /*
 void change(const int &a) {
@@ -371,6 +370,8 @@ public:
 	static void foo(const ClassWithClassFriends* Class) {
 		EvilFunction(Class->MutableInt);
 	}
+private:
+    mutable int m;        
 };
 
 
