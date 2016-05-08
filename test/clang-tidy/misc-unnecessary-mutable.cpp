@@ -6,8 +6,7 @@ struct NothingMutable {
   const int field3;
   volatile float field4;
 
-  NothingMutable(int a1, unsigned a2, int a3, float a4) :
-    field1(a1), field2(a2), field3(a3), field4(a4) {}
+  NothingMutable(int a1, unsigned a2, int a3, float a4) : field1(a1), field2(a2), field3(a3), field4(a4) {}
 
   void doSomething() {
     field1 = 1;
@@ -16,14 +15,12 @@ struct NothingMutable {
   }
 };
 
-
 struct NoMethods {
   int field1;
-  mutable unsigned field2;  // These cannot be fixed; they're public
+  mutable unsigned field2; // These cannot be fixed; they're public
   const int field3;
   mutable volatile NothingMutable field4;
 };
-
 
 class NoMethodsClass {
 public:
@@ -37,14 +34,12 @@ private:
   // CHECK-FIXES: {{^  }}volatile NothingMutable field4;
 };
 
-
 struct PrivateInStruct {
 private:
   mutable volatile unsigned long long blah;
   // CHECK-MESSAGES: :[[@LINE-1]]:39: warning: 'mutable' modifier is unnecessary for field 'blah' {{..}}
   // CHECK-FIXES: {{^  }}volatile unsigned long long blah;
 };
-
 
 union PrivateInUnion {
 public:
@@ -54,7 +49,6 @@ private:
   mutable char otherField;
 };
 
-
 class UnusedVar {
 private:
   mutable int x __attribute__((unused));
@@ -62,12 +56,11 @@ private:
   // CHECK-FIXES: {{^  }}int x __attribute__((unused));
 };
 
-
 class NoConstMethodsClass {
 public:
   int field1;
   mutable unsigned field2;
-  
+
   NoConstMethodsClass() : field2(42), field3(9), field4(NothingMutable(1, 2, 3, 4)) {}
 
   void doSomething() {
@@ -83,7 +76,6 @@ private:
   // CHECK-FIXES: {{^  }}NothingMutable field4;
 };
 
-
 class ConstMethods {
 private:
   mutable int field1, field2;
@@ -94,11 +86,13 @@ private:
   // CHECK-MESSAGES: :[[@LINE-3]]:59: warning: 'mutable' modifier is unnecessary for field 'constRef' {{..}}
 
   void takeArg(int x) const { x *= 4; }
-  int takeConstRef(const int& x) const { return x + 99; }
-  void takeRef(int&) const {}
+  int takeConstRef(const int &x) const { return x + 99; }
+  void takeRef(int &) const {}
 
-  template<typename... Args> void takeArgs(Args... args) const {}
-  template<typename... Args> void takeArgRefs(Args&... args) const {}
+  template <typename... Args>
+  void takeArgs(Args... args) const {}
+  template <typename... Args>
+  void takeArgRefs(Args &... args) const {}
 
 public:
   void doSomething() const {
@@ -118,7 +112,6 @@ public:
   }
 };
 
-
 class NonFinalClass {
 public:
   mutable int fPublic;
@@ -131,7 +124,6 @@ private:
   // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'fPrivate' {{..}}
   // CHECK-FIXES: {{^  }}int fPrivate;
 };
-
 
 class FinalClass final {
 public:
@@ -148,7 +140,6 @@ private:
   // CHECK-FIXES: {{^  }}int fPrivate;
 };
 
-
 class NotAllFuncsKnown {
   void doSomething();
   void doSomethingConst() const {}
@@ -159,7 +150,6 @@ private:
   // and then modify 'field' field.
 };
 
-
 class NotAllConstFuncsKnown {
   void doSomething() {}
   void doSomethingConst() const;
@@ -168,7 +158,6 @@ class NotAllConstFuncsKnown {
 private:
   mutable int field;
 };
-
 
 class ConstFuncOutside {
   void doSomething();
@@ -183,12 +172,10 @@ private:
 
 void ConstFuncOutside::doSomethingConst() const {}
 
-
 // We can't really see if mutable is necessary or not.
-template<typename T>
+template <typename T>
 class TemplatedClass {
 public:
-
   void doSomething() {
     a = b = c;
   }
@@ -203,7 +190,6 @@ private:
 
 TemplatedClass<int> TemplatedClassInt;
 
-
 class ClassWithTemplates {
 public:
   void doSomethingConst() const {
@@ -211,7 +197,7 @@ public:
   }
 
   // Here, we can see that.
-  template<typename T>
+  template <typename T>
   void doOtherConst() const {
     b = c;
   }
@@ -222,10 +208,8 @@ private:
   // CHECK-MESSAGES: :[[@LINE-2]]:24: warning: 'mutable' modifier is unnecessary for field 'd' {{..}}
 };
 
-
 class ImplicitCast {
 public:
-
   void doSomethingConst() const {
     a = b;
   }
@@ -239,17 +223,16 @@ private:
 
 struct MutableNotFirst {
 private:
-    long mutable long abc = 42;
+  long mutable long abc = 42;
   // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 'mutable' modifier is unnecessary for field 'abc' {{..}}
   // CHECK_FIXES: {{^  }}long long abc;
-    long long mutable bca;
+  long long mutable bca;
   // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 'mutable' modifier is unnecessary for field 'bca' {{..}}
   // CHECK_FIXES: {{^  }}long long bca;
-    int mutable ca;
+  int mutable ca;
   // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: 'mutable' modifier is unnecessary for field 'ca' {{..}}
   // CHECK_FIXES: {{^  }}int ca;
 };
-
 
 // Fails for now.
 /*
@@ -272,19 +255,17 @@ private:
 };
 */
 
-
 class StrangeClass {
 public:
-  void foo() { }
+  void foo() {}
 };
 
-
-void EvilFunction(int& a) { }
-void EvilFunction(const int& a) { }
+void EvilFunction(int &a) {}
+void EvilFunction(const int &a) {}
 
 class JustClass {
 public:
-  JustClass() { }
+  JustClass() {}
 
   void foo() {
     MutableClass.foo();
@@ -295,7 +276,7 @@ public:
 
 private:
   mutable StrangeClass MutableClass; // Must stay mutable (because of foo func below)
-  mutable int MutableInt; // Must stay mutable
+  mutable int MutableInt;            // Must stay mutable
 };
 
 void JustClass::foo() const {
@@ -306,71 +287,68 @@ void JustClass::evilCaller() const {
   EvilFunction(MutableInt);
 }
 
-
-
 class AnotherStrangeClass {
 public:
-	// Example of non-const method which requires that MutableInt should stay mutable.
-	void strangeFoo() {
-		const AnotherStrangeClass* ConstThis = this;
-		EvilFunction(ConstThis->MutableInt);
-	}
+  // Example of non-const method which requires that MutableInt should stay mutable.
+  void strangeFoo() {
+    const AnotherStrangeClass *ConstThis = this;
+    EvilFunction(ConstThis->MutableInt);
+  }
 
 private:
-	mutable int MutableInt; // must stay mutable
+  mutable int MutableInt; // must stay mutable
 };
-
 
 class ClassWithStrangeConstructor {
 public:
-	ClassWithStrangeConstructor() {
-		const ClassWithStrangeConstructor* ConstThis = this;
-		EvilFunction(ConstThis->MutableInt);
-	}
+  ClassWithStrangeConstructor() {
+    const ClassWithStrangeConstructor *ConstThis = this;
+    EvilFunction(ConstThis->MutableInt);
+  }
 
 private:
-	mutable int MutableInt; // must stay mutable
+  mutable int MutableInt; // must stay mutable
 };
 
 class ClassWithStrangeDestructor {
 public:
-	~ClassWithStrangeDestructor() {
-		const ClassWithStrangeDestructor* ConstThis = this;
-		EvilFunction(ConstThis->MutableInt);
-	}
+  ~ClassWithStrangeDestructor() {
+    const ClassWithStrangeDestructor *ConstThis = this;
+    EvilFunction(ConstThis->MutableInt);
+  }
 
 private:
-	mutable int MutableInt; // must stay mutable
+  mutable int MutableInt; // must stay mutable
 };
-
 
 // Don't touch friends or they'll hurt you.
 class ClassWithFriends {
 public:
-	friend void someFriend(ClassWithFriends*);
+  friend void someFriend(ClassWithFriends *);
 
 private:
-	mutable int MutableInt; // must stay mutable
+  mutable int MutableInt; // must stay mutable
 };
 
-void someFriend(ClassWithFriends* Class) {
-	const ClassWithFriends* ConstClass = Class;
-	EvilFunction(ConstClass->MutableInt);
+void someFriend(ClassWithFriends *Class) {
+  const ClassWithFriends *ConstClass = Class;
+  EvilFunction(ConstClass->MutableInt);
 }
 
 class ClassWithClassFriends {
 public:
-	friend class ClassFriend;
+  friend class ClassFriend;
 
 private:
-	mutable int MutableInt; // must stay mutable
+  mutable int MutableInt; // must stay mutable
 };
 
 class ClassFriend {
 public:
-	static void foo(const ClassWithClassFriends* Class) {
-		EvilFunction(Class->MutableInt);
-	}
+  static void foo(const ClassWithClassFriends *Class) {
+    EvilFunction(Class->MutableInt);
+  }
+
+private:
+    mutable int m;        
 };
-
-
