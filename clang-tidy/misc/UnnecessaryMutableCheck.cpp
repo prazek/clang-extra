@@ -13,8 +13,6 @@
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-// TODO: remove all debug things
-//#include <iostream>
 
 using namespace clang::ast_matchers;
 
@@ -34,11 +32,7 @@ public:
       FoundNonConstUse(false) {}
 
   void RunSearch(Decl *Declaration) {
-    //std::cerr << "New search!" << std::endl;
-    //Declaration->dumpColor();
     auto *Body = Declaration->getBody();
-    //if (Body) { Body->dumpColor(); }
-    //std::cerr << std::endl;
     ParMap = new ParentMap(Body);
     TraverseStmt(Body);
     delete ParMap;
@@ -52,9 +46,31 @@ public:
     if (Expression->getMemberDecl() != SoughtField)
       return true;
 
-    //Expression->dumpColor();
-    //Expression->getMemberDecl()->dumpColor();
-    
+    // Check if expr is a member of const thing.
+    bool IsConstObj = false;
+    for (auto *ChildStmt : Expression->children()) {
+      Expr *ChildExpr = dyn_cast<Expr>(ChildStmt);
+      if (ChildExpr) {
+        IsConstObj |= ChildExpr->getType().isConstQualified();
+
+        // If member expression dereferences, we need to check
+        // whether pointer type is const.
+        if (Expression->isArrow()) {
+          auto &WrappedType = *ChildExpr->getType();
+          if (!WrappedType.isPointerType()) {
+            // It's something weird. Just to be sure, assume we're const.
+            IsConstObj = true;
+          } else {
+            IsConstObj |= WrappedType.getPointeeType().isConstQualified();
+          }
+        }
+      }
+    }
+
+    // If it's not, mutableness changes nothing.
+    if (!IsConstObj)
+      return true;
+
     // By a const operation on a member expression we mean a MemberExpr
     // whose parent is ImplicitCastExpr to rvalue or something constant.
     bool HasRvalueCast = false;
@@ -62,13 +78,10 @@ public:
     if (ParMap->hasParent(Expression)) {
         const auto *Cast = dyn_cast<ImplicitCastExpr>(ParMap->getParent(Expression));
         if (Cast != nullptr) {
-          //Cast->dumpColor();
           HasRvalueCast = Cast->getCastKind() == CastKind::CK_LValueToRValue;
           HasConstCast = Cast->getType().isConstQualified();
         }
     }
-
-    //std::cerr << HasRvalueCast << " " << HasConstCast << std::endl;
 
     if (!HasRvalueCast && !HasConstCast) {
       FoundNonConstUse = true;
@@ -97,16 +110,18 @@ public:
       : SM(Context.getSourceManager()), SoughtField(SoughtField), NecessaryMutable(false) {}
 
   bool VisitDecl(Decl *GenericDecl) {
-    CXXMethodDecl *Declaration = dyn_cast<CXXMethodDecl>(GenericDecl);
+    // As for now, we can't track friends.
+    if (dyn_cast<FriendDecl>(GenericDecl)) {
+      NecessaryMutable = true;
+      return false;
+    }
+
+    FunctionDecl *Declaration = dyn_cast<FunctionDecl>(GenericDecl);
 
     if (Declaration == nullptr)
       return true;
 
-    // Mutable keyword does not influence non-const methods.
-    if (!Declaration->isConst())
-      return true;
-
-    // All const  decls need definitions in main file.
+    // All decls need their definitions in main file.
     if (!Declaration->hasBody() || !SM.isInMainFile(Declaration->getBody()->getLocStart())) {
       NecessaryMutable = true;
       return false;
@@ -155,19 +170,15 @@ static bool CheckRemoval(SourceManager &SM,
   while (!DeclLexer.LexFromRawLexer(DeclToken)) {
 
     if (DeclToken.getKind() == tok::TokenKind::semi) {
-      //std::cerr << "Found semi!\n";
       break;
     }
 
     if (DeclToken.getKind() == tok::TokenKind::comma) {
-      //std::cerr << "Found comma, it's a multiple declaration!\n";
       return false;
     }
 
     if (DeclToken.isOneOf(tok::TokenKind::identifier, tok::TokenKind::raw_identifier)) {
-      //std::cerr << "Found identifier!\n";
       auto TokenStr = DeclToken.getRawIdentifier().str();
-      //std::cerr << "Token: " << TokenStr << "\n";
 
       // "mutable" cannot be used in any other way than to mark mutableness
       if (TokenStr == "mutable") {
@@ -185,34 +196,19 @@ static bool CheckRemoval(SourceManager &SM,
 
 void UnnecessaryMutableCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *MD = Result.Nodes.getNodeAs<FieldDecl>("field");
-  /*std::cerr << MD->isImplicit() << "\n" <<
-               MD->getDeclName().getAsString() << "\n" <<
-               MD->hasAttr<UnusedAttr>() << "\n" <<
-               MD->getParent()->isDependentContext() << "\n" <<
-               MD->isMutable() << "\n" <<
-               MD->isReferenced() << "\n" <<
-               MD->isThisDeclarationReferenced() << "\n";
-  MD->dumpColor();*/
-
   const auto *ClassMatch = dyn_cast<CXXRecordDecl>(MD->getParent());
   auto &Context = *Result.Context;
   auto &SM = *Result.SourceManager;
-
-  //ClassMatch->dumpColor();
 
   if (!MD->getDeclName() || ClassMatch->isDependentContext() || !MD->isMutable())
     return;
 
   ClassMethodVisitor Visitor(Context, const_cast<FieldDecl*>(MD));
   Visitor.TraverseDecl(const_cast<CXXRecordDecl*>(ClassMatch));
-  //std::cerr << std::endl;
 
   if (Visitor.IsMutableNecessary())
     return;
 
-
-  //std::cerr << "Unnecessary mutable!" << std::endl;
-  
   auto Diag = diag(MD->getLocation(), "'mutable' modifier is unnecessary for field %0")
                     << MD->getDeclName();
 
@@ -222,18 +218,8 @@ void UnnecessaryMutableCheck::check(const MatchFinder::MatchResult &Result) {
                    MD->getLocEnd(),
                    Context,
                    RemovalRange)) {
-    //std::cerr << "WANNA REMOVE!" << std::endl;
     Diag << FixItHint::CreateRemoval(RemovalRange);
   }
-
-
-
-  /*const auto *MatchedDecl = Result.Nodes.getNodeAs<FunctionDecl>("x");
-  if (MatchedDecl->getName().startswith("awesome_"))
-    return;
-  diag(MatchedDecl->getLocation(), "function '%0' is insufficiently awesome")
-      << MatchedDecl->getName()
-      << FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_");*/
 }
 
 } // namespace misc

@@ -19,7 +19,7 @@ struct NothingMutable {
 
 struct NoMethods {
   int field1;
-  mutable unsigned field2;
+  mutable unsigned field2;  // These cannot be fixed; they're public
   const int field3;
   mutable volatile NothingMutable field4;
 };
@@ -155,8 +155,8 @@ class NotAllFuncsKnown {
 
 private:
   mutable int field;
-  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'field' {{..}}
-  // CHECK-FIXES: {{^  }}int field;
+  // Can't be fixed. We don't know if doSomething() doesn't declare a *const* NotAllFuncsKnown instance
+  // and then modify 'field' field.
 };
 
 
@@ -184,6 +184,7 @@ private:
 void ConstFuncOutside::doSomethingConst() const {}
 
 
+// We can't really see if mutable is necessary or not.
 template<typename T>
 class TemplatedClass {
 public:
@@ -209,6 +210,7 @@ public:
     a = b;
   }
 
+  // Here, we can see that.
   template<typename T>
   void doOtherConst() const {
     b = c;
@@ -248,6 +250,9 @@ private:
   // CHECK_FIXES: {{^  }}int ca;
 };
 
+
+// Fails for now.
+/*
 void change(const int &a) {
     const_cast<int&>(a) = 42;
 }
@@ -255,9 +260,117 @@ void change(const int &a) {
 struct Change {
     void changeMember() const {
         change(m);
+        const int& x = otherM;
+        const_cast<int&>(x) = 33;
+
+        const_cast<int&>(anotherM) = -4;
     }
 private:
     mutable int m;        
+    mutable int otherM;
+    mutable int anotherM;
+};
+*/
+
+
+class StrangeClass {
+public:
+  void foo() { }
+};
+
+
+void EvilFunction(int& a) { }
+void EvilFunction(const int& a) { }
+
+class JustClass {
+public:
+  JustClass() { }
+
+  void foo() {
+    MutableClass.foo();
+  }
+
+  void foo() const;
+  void evilCaller() const;
+
+private:
+  mutable StrangeClass MutableClass; // Must stay mutable (because of foo func below)
+  mutable int MutableInt; // Must stay mutable
+};
+
+void JustClass::foo() const {
+  MutableClass.foo();
+}
+
+void JustClass::evilCaller() const {
+  EvilFunction(MutableInt);
+}
+
+
+
+class AnotherStrangeClass {
+public:
+	// Example of non-const method which requires that MutableInt should stay mutable.
+	void strangeFoo() {
+		const AnotherStrangeClass* ConstThis = this;
+		EvilFunction(ConstThis->MutableInt);
+	}
+
+private:
+	mutable int MutableInt; // must stay mutable
+};
+
+
+class ClassWithStrangeConstructor {
+public:
+	ClassWithStrangeConstructor() {
+		const ClassWithStrangeConstructor* ConstThis = this;
+		EvilFunction(ConstThis->MutableInt);
+	}
+
+private:
+	mutable int MutableInt; // must stay mutable
+};
+
+class ClassWithStrangeDestructor {
+public:
+	~ClassWithStrangeDestructor() {
+		const ClassWithStrangeDestructor* ConstThis = this;
+		EvilFunction(ConstThis->MutableInt);
+	}
+
+private:
+	mutable int MutableInt; // must stay mutable
+};
+
+
+// Don't touch friends or they'll hurt you.
+class ClassWithFriends {
+public:
+	friend void someFriend(ClassWithFriends*);
+
+private:
+	mutable int MutableInt; // must stay mutable
+};
+
+void someFriend(ClassWithFriends* Class) {
+	const ClassWithFriends* ConstClass = Class;
+	EvilFunction(ConstClass->MutableInt);
+}
+
+class ClassWithClassFriends {
+public:
+	friend class ClassFriend;
+
+private:
+	mutable int MutableInt; // must stay mutable
+};
+
+class ClassFriend {
+public:
+	static void foo(const ClassWithClassFriends* Class) {
+		EvilFunction(Class->MutableInt);
+	}
 };
 
 
