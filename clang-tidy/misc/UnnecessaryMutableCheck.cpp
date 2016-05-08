@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "../utils/LexerUtils.h"
 #include "UnnecessaryMutableCheck.h"
+#include "../utils/LexerUtils.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -20,16 +20,20 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-
 void UnnecessaryMutableCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(fieldDecl(anyOf(isPrivate(), allOf(isProtected(), hasParent(cxxRecordDecl(isFinal())))),
-        unless(anyOf(isImplicit(), isInstantiated(), hasParent(cxxRecordDecl(isUnion()))))).bind("field"), this);
+  Finder->addMatcher(
+      fieldDecl(anyOf(isPrivate(), allOf(isProtected(),
+                                         hasParent(cxxRecordDecl(isFinal())))),
+                unless(anyOf(isImplicit(), isInstantiated(),
+                             hasParent(cxxRecordDecl(isUnion())))))
+          .bind("field"),
+      this);
 }
 
 class FieldUseVisitor : public RecursiveASTVisitor<FieldUseVisitor> {
 public:
-  explicit FieldUseVisitor(FieldDecl *SoughtField) : SoughtField(SoughtField),
-      FoundNonConstUse(false) {}
+  explicit FieldUseVisitor(FieldDecl *SoughtField)
+      : SoughtField(SoughtField), FoundNonConstUse(false) {}
 
   void RunSearch(Decl *Declaration) {
     auto *Body = Declaration->getBody();
@@ -76,11 +80,12 @@ public:
     bool HasRvalueCast = false;
     bool HasConstCast = false;
     if (ParMap->hasParent(Expression)) {
-        const auto *Cast = dyn_cast<ImplicitCastExpr>(ParMap->getParent(Expression));
-        if (Cast != nullptr) {
-          HasRvalueCast = Cast->getCastKind() == CastKind::CK_LValueToRValue;
-          HasConstCast = Cast->getType().isConstQualified();
-        }
+      const auto *Cast =
+          dyn_cast<ImplicitCastExpr>(ParMap->getParent(Expression));
+      if (Cast != nullptr) {
+        HasRvalueCast = Cast->getCastKind() == CastKind::CK_LValueToRValue;
+        HasConstCast = Cast->getType().isConstQualified();
+      }
     }
 
     if (!HasRvalueCast && !HasConstCast) {
@@ -91,23 +96,19 @@ public:
     return true;
   }
 
-  bool IsNonConstUseFound() const {
-    return FoundNonConstUse;
-  }
+  bool IsNonConstUseFound() const { return FoundNonConstUse; }
 
 private:
   FieldDecl *SoughtField;
   ParentMap *ParMap;
   bool FoundNonConstUse;
-
 };
-
-
 
 class ClassMethodVisitor : public RecursiveASTVisitor<ClassMethodVisitor> {
 public:
   ClassMethodVisitor(ASTContext &Context, FieldDecl *SoughtField)
-      : SM(Context.getSourceManager()), SoughtField(SoughtField), NecessaryMutable(false) {}
+      : SM(Context.getSourceManager()), SoughtField(SoughtField),
+        NecessaryMutable(false) {}
 
   bool VisitDecl(Decl *GenericDecl) {
     // As for now, we can't track friends.
@@ -122,7 +123,8 @@ public:
       return true;
 
     // All decls need their definitions in main file.
-    if (!Declaration->hasBody() || !SM.isInMainFile(Declaration->getBody()->getLocStart())) {
+    if (!Declaration->hasBody() ||
+        !SM.isInMainFile(Declaration->getBody()->getLocStart())) {
       NecessaryMutable = true;
       return false;
     }
@@ -137,9 +139,7 @@ public:
     return true;
   }
 
-  bool IsMutableNecessary() const {
-    return NecessaryMutable;
-  }
+  bool IsMutableNecessary() const { return NecessaryMutable; }
 
 private:
   SourceManager &SM;
@@ -147,22 +147,17 @@ private:
   bool NecessaryMutable;
 };
 
-
 // Checks if 'mutable' keyword can be removed; for now; we do it only if
 // it is the only declaration in a declaration chain.
-static bool CheckRemoval(SourceManager &SM,
-                         const SourceLocation &LocStart,
-                         const SourceLocation &LocEnd,
-                         ASTContext &Context,
+static bool CheckRemoval(SourceManager &SM, const SourceLocation &LocStart,
+                         const SourceLocation &LocEnd, ASTContext &Context,
                          SourceRange &ResultRange) {
-  
+
   FileID FID = SM.getFileID(LocEnd);
   llvm::MemoryBuffer *Buffer = SM.getBuffer(FID, LocEnd);
   Lexer DeclLexer(SM.getLocForStartOfFile(FID), Context.getLangOpts(),
-                  Buffer->getBufferStart(),
-                  SM.getCharacterData(LocStart),
+                  Buffer->getBufferStart(), SM.getCharacterData(LocStart),
                   Buffer->getBufferEnd());
-
 
   Token DeclToken;
   bool result = false;
@@ -177,12 +172,14 @@ static bool CheckRemoval(SourceManager &SM,
       return false;
     }
 
-    if (DeclToken.isOneOf(tok::TokenKind::identifier, tok::TokenKind::raw_identifier)) {
+    if (DeclToken.isOneOf(tok::TokenKind::identifier,
+                          tok::TokenKind::raw_identifier)) {
       auto TokenStr = DeclToken.getRawIdentifier().str();
 
       // "mutable" cannot be used in any other way than to mark mutableness
       if (TokenStr == "mutable") {
-        ResultRange = SourceRange(DeclToken.getLocation(), DeclToken.getEndLoc());
+        ResultRange =
+            SourceRange(DeclToken.getLocation(), DeclToken.getEndLoc());
         result = true;
       }
     }
@@ -193,30 +190,29 @@ static bool CheckRemoval(SourceManager &SM,
   return result;
 }
 
-
 void UnnecessaryMutableCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *MD = Result.Nodes.getNodeAs<FieldDecl>("field");
   const auto *ClassMatch = dyn_cast<CXXRecordDecl>(MD->getParent());
   auto &Context = *Result.Context;
   auto &SM = *Result.SourceManager;
 
-  if (!MD->getDeclName() || ClassMatch->isDependentContext() || !MD->isMutable())
+  if (!MD->getDeclName() || ClassMatch->isDependentContext() ||
+      !MD->isMutable())
     return;
 
-  ClassMethodVisitor Visitor(Context, const_cast<FieldDecl*>(MD));
-  Visitor.TraverseDecl(const_cast<CXXRecordDecl*>(ClassMatch));
+  ClassMethodVisitor Visitor(Context, const_cast<FieldDecl *>(MD));
+  Visitor.TraverseDecl(const_cast<CXXRecordDecl *>(ClassMatch));
 
   if (Visitor.IsMutableNecessary())
     return;
 
-  auto Diag = diag(MD->getLocation(), "'mutable' modifier is unnecessary for field %0")
-                    << MD->getDeclName();
+  auto Diag =
+      diag(MD->getLocation(), "'mutable' modifier is unnecessary for field %0")
+      << MD->getDeclName();
 
   SourceRange RemovalRange;
-  
-  if (CheckRemoval(SM, MD->getLocStart(),
-                   MD->getLocEnd(),
-                   Context,
+
+  if (CheckRemoval(SM, MD->getLocStart(), MD->getLocEnd(), Context,
                    RemovalRange)) {
     Diag << FixItHint::CreateRemoval(RemovalRange);
   }
