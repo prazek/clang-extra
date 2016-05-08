@@ -85,6 +85,7 @@ Clang-Tidy Checks
    misc-throw-by-value-catch-by-reference
    misc-undelegated-constructor
    misc-uniqueptr-reset-release
+   misc-unnecessary-mutable
    misc-unused-alias-decls
    misc-unused-parameters
    misc-unused-raii
