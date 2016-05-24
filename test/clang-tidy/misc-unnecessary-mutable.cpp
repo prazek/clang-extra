@@ -166,8 +166,6 @@ class ConstFuncOutside {
 
 private:
   mutable int field;
-  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'field' {{..}}
-  // CHECK-FIXES: {{^  }}int field;
 };
 
 void ConstFuncOutside::doSomethingConst() const {}
@@ -224,13 +222,13 @@ private:
 struct MutableNotFirst {
 private:
   long mutable long abc = 42;
-  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 'mutable' modifier is unnecessary for field 'abc' {{..}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: 'mutable' modifier is unnecessary for field 'abc' {{..}}
   // CHECK_FIXES: {{^  }}long long abc;
   long long mutable bca;
-  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 'mutable' modifier is unnecessary for field 'bca' {{..}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: 'mutable' modifier is unnecessary for field 'bca' {{..}}
   // CHECK_FIXES: {{^  }}long long bca;
   int mutable ca;
-  // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: 'mutable' modifier is unnecessary for field 'ca' {{..}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'ca' {{..}}
   // CHECK_FIXES: {{^  }}int ca;
 };
 
@@ -348,7 +346,4 @@ public:
   static void foo(const ClassWithClassFriends *Class) {
     EvilFunction(Class->MutableInt);
   }
-
-private:
-    mutable int m;        
 };
