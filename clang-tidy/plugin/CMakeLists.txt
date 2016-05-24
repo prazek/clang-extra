@@ -8,6 +8,7 @@ add_clang_library(clangTidyPlugin
   clangFrontend
   clangSema
   clangTidy
+  clangTidyBugProneModule
   clangTidyBoostModule
   clangTidyCERTModule
   clangTidyCppCoreGuidelinesModule

@@ -63,6 +63,13 @@ Improvements to clang-tidy
 explain them more clearly, and provide more accurate fix-its for the issues
 identified.  The improvements since the 3.8 release include:
 
+- New bugprone module containing checks looking for bugprone code.
+
+- New `bugprone-bool-to-integer-conversion
+  <http://clang.llvm.org/extra/clang-tidy/checks/bugprone-bool-to-integer-conversion.html>`_ check
+
+  Replaces bool literals which are being implicitly cast to integers with integer literals.
+
 - New Boost module containing checks for issues with Boost library.
 
 - New `boost-use-to-string 

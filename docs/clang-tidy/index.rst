@@ -67,7 +67,9 @@ There are currently the following groups of checks:
 
 * Clang static analyzer checks are named starting with ``clang-analyzer-``.
 
-* Checks related to Boost library starts with ``boost-``. 
+* Checks related to Boost library starts with ``boost-``.
+
+* The ``bugprone-*`` checks target code that have some potential bugs.
   
 Clang diagnostics are treated in a similar way as check diagnostics. Clang
 diagnostics are displayed by clang-tidy and can be filtered out using
@@ -347,6 +349,8 @@ implementing checks related to:
 
 * `C++ Core Guidelines
   <http://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/clang-tidy/cppcoreguidelines/>`_
+* potential `bugprone code
+  <http://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/clang-tidy/bugprone/>`_
 * `CERT Secure Coding Standards
   <http://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/clang-tidy/cert/>`_
 * `Google Style Guide
