@@ -47,11 +47,8 @@ void IncrementBoolCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *MatchedDecl = Result.Nodes.getNodeAs<UnaryOperator>(UnaryOpName);
   const auto *MatchedExpr = Result.Nodes.getNodeAs<Expr>(ExprName);
 
-  // Don't fix if expression type is dependent on template initialization
-  if (MatchedExpr->isTypeDependent())
-    return;
-
-  if (MatchedDecl->getLocStart().isMacroId())
+  // If declaration is inside macro, we don't want to fix it
+  if (MatchedDecl->getLocStart().isMacroID())
     return;
 
   SourceManager &SM = *Result.SourceManager;
@@ -62,7 +59,6 @@ void IncrementBoolCheck::check(const MatchFinder::MatchResult &Result) {
                                      MatchedExpr->getLocEnd()),
       SM, LangOptions(), &Invalid);
   assert(!Invalid);
-
 
   bool IsLastOperation = Result.Nodes.getNodeAs<CompoundStmt>(ParentName);
 
@@ -76,13 +72,13 @@ void IncrementBoolCheck::check(const MatchFinder::MatchResult &Result) {
   bool UseInnerParentheses = Result.Nodes.getNodeAs<ParenExpr>(ParenExprName);
   bool UseOuterParentheses = !IsLastOperation;
 
-  StringRef Replacement = SubExpr;
+  std::string Replacement = SubExpr.str();
   if (UseInnerParentheses)
-    Replacement = llvm::Twine("(" + Replacement + ")").str();
+    Replacement = "(" + Replacement + ")";
 
-  Replacement = llvm::Twine(Replacement + " = true").str();
+  Replacement += " = true";
   if (UseOuterParentheses)
-    Replacement = llvm::Twine("(" + Replacement + ")").str();
+    Replacement = "(" + Replacement + ")";
 
   Diag << FixItHint::CreateReplacement(
       CharSourceRange::getTokenRange(MatchedDecl->getLocStart(),

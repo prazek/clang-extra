@@ -46,12 +46,9 @@ statement). For example:
 .. code-block:: c++
 
   bool first = false, second;
+  second = first++;
 
-  /* Equivalent to:
-    if (!first) {
-      second = false;
-      first = true;
-    }
-  */
-  if (!first) second = first++;
+  // Equivalent to:
+  second = false;
+  first = true;
 
