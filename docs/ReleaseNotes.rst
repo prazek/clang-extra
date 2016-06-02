@@ -175,6 +175,11 @@ identified.  The improvements since the 3.8 release include:
 
   Find suspicious usage of runtime string comparison functions.
 
+- New `misc-unnecessary-mutable
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-unnecessary-mutable.html>`_ check
+
+  Finds places where ``mutable`` keyword is potentially unneeded.
+
 - New `misc-unused-using-decls
   <http://clang.llvm.org/extra/clang-tidy/checks/misc-unused-using-decls.html>`_ check
 

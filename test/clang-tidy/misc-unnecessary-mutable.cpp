@@ -232,7 +232,7 @@ private:
   // CHECK_FIXES: {{^  }}int ca;
 };
 
-// Fails for now.
+// Fails for now. (See: documentation.)
 /*
 void change(const int &a) {
     const_cast<int&>(a) = 42;
@@ -345,5 +345,33 @@ class ClassFriend {
 public:
   static void foo(const ClassWithClassFriends *Class) {
     EvilFunction(Class->MutableInt);
+  }
+};
+
+
+// Definitions containing macros. Nothing inside macro should
+// be noticed nor modified. However, if 'mutable' keyword is outside
+// of our macro, we leave the freedom to the check. It is not expected
+// to notice and fix, but if it does (and it does once below), it is
+// even better for us.
+// This test was added mainly to figure out if nothing explodes inside the
+// check.
+
+#define MUTABLE_FIELD(TYPE, NAME) mutable TYPE NAME
+#define SOME_FIELD(TYPE, NAME) TYPE NAME
+#define SOME_FIELD_SEMI(TYPE, NAME) TYPE NAME;
+#define SOME_FIELD_TYPE(TYPE) TYPE
+class MacroFields {
+  MUTABLE_FIELD(int, removedMutable);
+  MUTABLE_FIELD(int, keptMutable);
+  mutable SOME_FIELD(int, removedMutable2);
+  mutable SOME_FIELD_SEMI(int, removedMutable3)
+  mutable SOME_FIELD_TYPE(int) removedMutable4;
+  // CHECK-MESSAGES: :[[@LINE-1]]:32: warning: 'mutable' modifier is unnecessary for field 'removedMutable4' {{..}}
+  // CHECK-FIXES: {{^  }}SOME_FIELD_TYPE(int) removedMutable4;
+
+public:
+  void modify() const {
+    keptMutable = 44;
   }
 };

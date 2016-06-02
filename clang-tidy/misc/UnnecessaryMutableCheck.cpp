@@ -197,8 +197,10 @@ void UnnecessaryMutableCheck::check(const MatchFinder::MatchResult &Result) {
   auto &SM = *Result.SourceManager;
 
   if (!MD->getDeclName() || ClassMatch->isDependentContext() ||
-      !MD->isMutable())
+      !MD->isMutable() || MD->getLocStart().isMacroID() || MD->getLocEnd().isMacroID())
     return;
+
+  MD->dumpColor();
 
   ClassMethodVisitor Visitor(Context, const_cast<FieldDecl *>(MD));
   Visitor.TraverseDecl(const_cast<CXXRecordDecl *>(ClassMatch));

@@ -7,6 +7,7 @@ The tool tries to find situations where ``mutable`` might be unnecessary
 (i.e. each use of the mutable field on the const object is constant).
 
 .. code-block:: c++
+
   class SomeClass {
     public:
       void foo() {
@@ -35,6 +36,7 @@ Please note that there is a possibility that false-positives occur. For example,
 one can use ``const_cast``:
 
 .. code-block:: c++
+
   class AnotherClass {
     public:
       void foo() const {
