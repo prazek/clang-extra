@@ -42,8 +42,9 @@ void BoolToIntegerConversionCheck::registerMatchers(MatchFinder *Finder) {
 
   auto isInReturnStmt = hasParent(returnStmt());
   auto forTheSameFunction = forFunction(equalsBoundNode("function"));
-  auto returnNotBool =
-      returnStmt(forTheSameFunction, unless(has(expr(hasType(booleanType())))));
+  auto returnNotBool = returnStmt(
+      forTheSameFunction,
+      unless(has(ignoringParenImpCasts(expr(hasType(booleanType()))))));
   auto allReturnsBool = hasBody(unless(hasDescendant(returnNotBool)));
 
   auto soughtCast =
@@ -72,6 +73,7 @@ void BoolToIntegerConversionCheck::check(
     const MatchFinder::MatchResult &Result) {
 
   if (const auto *Function = Result.Nodes.getNodeAs<FunctionDecl>("function")) {
+    Function->dumpColor();
     const auto *Return = Result.Nodes.getNodeAs<Expr>("return");
     return changeFunctionReturnType(*Function, *Return);
   }
