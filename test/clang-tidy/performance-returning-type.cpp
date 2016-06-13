@@ -3,30 +3,25 @@
 
 // we need std::move mock
 namespace std {
-template<typename _Tp>
-struct remove_reference
-{ typedef _Tp   type; };
+template <typename _Tp>
+struct remove_reference { typedef _Tp type; };
 
-template<typename _Tp>
-struct remove_reference<_Tp&>
-{ typedef _Tp   type; };
+template <typename _Tp>
+struct remove_reference<_Tp &> { typedef _Tp type; };
 
-template<typename _Tp>
-struct remove_reference<_Tp&&>
-{ typedef _Tp   type; };
+template <typename _Tp>
+struct remove_reference<_Tp &&> { typedef _Tp type; };
 
-template<typename _Tp>
-constexpr typename std::remove_reference<_Tp>::type&&
-move(_Tp&& __t) noexcept
-{ return static_cast<typename std::remove_reference<_Tp>::type&&>(__t); }
-
+template <typename _Tp>
+constexpr typename std::remove_reference<_Tp>::type &&
+move(_Tp &&__t) noexcept { return static_cast<typename std::remove_reference<_Tp>::type &&>(__t); }
 }
 
 class SimpleClass {
 public:
   SimpleClass() = default;
   SimpleClass(const SimpleClass &) = default;
-  SimpleClass(SimpleClass&&) = default;
+  SimpleClass(SimpleClass &&) = default;
 
   // We don't want to add std::move here because it will be added by compiler
   SimpleClass foo(SimpleClass a, const SimpleClass b, SimpleClass &c, const SimpleClass &d, SimpleClass &&e, const SimpleClass &&f, char k) {
@@ -49,17 +44,21 @@ public:
   }
 };
 
+SimpleClass simpleClassFoo() {
+  return SimpleClass();
+}
+
 class FromValueClass {
 public:
-  FromValueClass(SimpleClass a) { }
+  FromValueClass(SimpleClass a) {}
 
   FromValueClass foo(SimpleClass a, const SimpleClass b, SimpleClass &c, const SimpleClass &d, SimpleClass &&e, const SimpleClass &&f, char k) {
     switch (k) {
     case 'a':
       // Because SimpleClass is move constructible
       return a;
-        // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: expression could be wrapped with std::move [performance-returning-type]
-        // CHECK-FIXES: {{^ *}}return FromValueClass(std::move(a));{{$}}
+    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: expression could be wrapped with std::move [performance-returning-type]
+    // CHECK-FIXES: {{^ *}}return FromValueClass(std::move(a));{{$}}
     case 'b':
       return b;
     case 'c':
@@ -70,6 +69,8 @@ public:
       return e;
     case 'f':
       return f;
+    case 'g':
+      return simpleClassFoo();
     default:
       return SimpleClass();
     }
@@ -101,6 +102,8 @@ public:
     case 'f':
       return f;
     // We don't want to add std::move below because it is not necessary (TODO is that true?)
+    case 'g':
+      return simpleClassFoo();
     default:
       return SimpleClass();
     }
@@ -108,30 +111,32 @@ public:
 
   FromRRefClass foo2(char k) {
     SimpleClass a;
-    const SimpleClass& b = a;
-    SimpleClass& c = a;
-    SimpleClass* d = &a;
+    const SimpleClass &b = a;
+    SimpleClass &c = a;
+    SimpleClass *d = &a;
     const SimpleClass e;
 
-    switch(k) {
-      case 'a':
-        return a;
-        // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: expression could be wrapped with std::move [performance-returning-type]
-        // CHECK-FIXES: {{^ *}}return FromRRefClass(std::move(a));{{$}}
-      case 'b':
-        return b;
-      case 'c':
-        return c;
-      case 'd':
-        return *d;
-        // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: expression could be wrapped with std::move [performance-returning-type]
-        // CHECK-FIXES: {{^ *}}return FromRRefClass(std::move(*d));{{$}}
-      case 'e':
-        return e;
-      case 'x':
-        return SimpleClass();
-      case 'y':
-        return FromRRefClass(SimpleClass());
+    switch (k) {
+    case 'a':
+      return a;
+    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: expression could be wrapped with std::move [performance-returning-type]
+    // CHECK-FIXES: {{^ *}}return FromRRefClass(std::move(a));{{$}}
+    case 'b':
+      return b;
+    case 'c':
+      return c;
+    case 'd':
+      return *d;
+    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: expression could be wrapped with std::move [performance-returning-type]
+    // CHECK-FIXES: {{^ *}}return FromRRefClass(std::move(*d));{{$}}
+    case 'e':
+      return e;
+    case 'f':
+      return simpleClassFoo();
+    case 'x':
+      return SimpleClass();
+    case 'y':
+      return FromRRefClass(SimpleClass());
     }
   }
 
@@ -140,14 +145,14 @@ public:
     SimpleClass b;
     FromRRefClass c;
     switch (k) {
-      case 'a':
-        return std::move(a);
-      case 'b':
-        return FromRRefClass(std::move(a));
-      case 'c':
-        return c;
-      default:
-        return FromRRefClass();
+    case 'a':
+      return std::move(a);
+    case 'b':
+      return FromRRefClass(std::move(a));
+    case 'c':
+      return c;
+    default:
+      return FromRRefClass();
     }
   }
 };
@@ -251,3 +256,39 @@ public:
 FromRefWithDeleted foo11(SimpleClass a) {
   return a;
 }
+
+class ClassWithUsings {
+public:
+  using value = SimpleClass;
+  using const_value = const SimpleClass;
+  using lreference = SimpleClass &;
+  using const_lreference = const SimpleClass &;
+  using rreference = SimpleClass &&;
+  using const_rreference = const SimpleClass &&;
+
+  ClassWithUsings(rreference) {}
+  ClassWithUsings(const_lreference) {}
+
+  ClassWithUsings foo(value a, const_value b, lreference c, const_lreference d, rreference e, const_rreference f, char k) {
+    switch (k) {
+    case 'a':
+      return a;
+    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: {{..}}
+    // CHECK-FIXES: {{^ *}}return ClassWithUsings(std::move(a));{{$}}
+    case 'b':
+      return b;
+    case 'c':
+      return c;
+    case 'd':
+      return d;
+    case 'e':
+      return e;
+    case 'f':
+      return f;
+    case 'g':
+      return simpleClassFoo();
+    default:
+      return SimpleClass();
+    }
+  }
+};

@@ -13,8 +13,6 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
-#include <iostream>
-#include <utility>
 
 using namespace clang::ast_matchers;
 using namespace llvm;
@@ -22,8 +20,6 @@ using namespace llvm;
 namespace clang {
 namespace tidy {
 namespace performance {
-
-// TODO: Where should I add hasCannonicalType?
 
 namespace {
 
@@ -52,7 +48,7 @@ AST_MATCHER_P(CXXConstructExpr, ctorCallee,
           InnerMatcher.matches(*CtorDecl, Finder, Builder));
 }
 
-/// \brief Matches if the matched type after removing const and referencec
+/// \brief Matches if the matched type after removing const and reference
 /// matches the given matcher.
 AST_MATCHER_P(QualType, ignoringRefsAndConsts,
               ast_matchers::internal::Matcher<QualType>, InnerMatcher) {
@@ -89,8 +85,8 @@ AST_MATCHER_P(TemplateTypeParmDecl, hasTemplateType,
 /// to move-construct from any type.
 AST_MATCHER_FUNCTION(ast_matchers::internal::Matcher<CXXConstructorDecl>,
                      moveConstructorFromAnyType) {
-  // How is working binding in matcher? Is it global or matcher-local?
-  // (If it is global, that should be rewritten!)
+  // Potentially danger: this matcher binds a name, with probably
+  // mean that you cant use it twice in your check!
   const char TemplateArgument[] = "templateArgument";
   return cxxConstructorDecl(
       hasParent(functionTemplateDecl(has(templateTypeParmDecl(
@@ -112,15 +108,15 @@ AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
       cxxRecordDecl(hasDescendant(cxxConstructorDecl(InnerMatcher))));
 }
 
-/// \brief
+/// \brief Matches to qual types which has constructors from type that matches
+/// the given matcher.
 AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
                        hasConstructorFromType,
                        ast_matchers::internal::Matcher<QualType>,
                        InnerMatcher) {
   auto ConstructorMatcher = cxxConstructorDecl(
       unless(isDeleted()), haveOneActiveArgument(),
-      hasParameter(
-          0, hasType(qualType(hasCanonicalType(qualType(InnerMatcher))))));
+      hasParameter(0, hasType(hasCanonicalType(qualType(InnerMatcher)))));
 
   return hasConstructor(ConstructorMatcher);
 }
@@ -131,53 +127,74 @@ void ReturningTypeCheck::registerMatchers(MatchFinder *Finder) {
   if (!getLangOpts().CPlusPlus11)
     return;
 
-  // Has it type same as "constructedType" ignoring refs and consts?
-  auto HasTypeSameAsConstructed = hasType(qualType(hasCanonicalType(
-      ignoringRefsAndConsts(equalsBoundNode("constructedType")))));
+  // Matches to type with after ignoring refs and consts is the same as
+  // "constructedType"
+  auto HasTypeSameAsConstructed = hasType(hasCanonicalType(
+      ignoringRefsAndConsts(equalsBoundNode("constructedType"))));
 
-  auto HasRvalueReferenceType = hasType(qualType(rValueReferenceType()));
+  auto HasRvalueReferenceType =
+      hasType(hasCanonicalType(qualType(rValueReferenceType())));
 
-  auto RefOrConstVarDecl =
-      varDecl(hasType(qualType(anyOf(referenceType(), isConstQualified()))));
+  auto RefOrConstVarDecl = varDecl(hasType(
+      hasCanonicalType(qualType(anyOf(referenceType(), isConstQualified())))));
 
-  // Does this expression have declaration with is reference or const?
+  // Matches to expression expression that have declaration with is reference or
+  // const
   auto IsDeclaredAsRefOrConstType =
       anyOf(hasDescendant(declRefExpr(to(RefOrConstVarDecl))),
             declRefExpr(to(RefOrConstVarDecl)));
 
-  auto ConstructorParameterMatcher =
-      hasType(qualType(unless(rValueReferenceType())));
+  // Constructor parameter must not already be rreference
+  auto ParameterMatcher =
+      hasType(hasCanonicalType(qualType(unless(rValueReferenceType()))));
 
-  auto ConstructorArgumentMatcher =
+  // Constructor argument must
+  // * have different type than constructed type
+  // * not be r value reference type
+  // * not be declared as const or as reference to other variable
+  // * not be temporary object
+  // * not be cast from temporary object
+  auto ArgumentMatcher =
       unless(anyOf(HasTypeSameAsConstructed, HasRvalueReferenceType,
                    IsDeclaredAsRefOrConstType, cxxTemporaryObjectExpr(),
                    hasDescendant(cxxTemporaryObjectExpr())));
 
-  // Is this QualType constructible from argumentCannonicalType type
+  // Matches to type constructible from argumentCanonicalType type
   // * by r reference or
-  // * by value, and argumentCannonicalType is move constructible?
+  // * by value, and argumentCanonicalType is move constructible
   auto IsMoveOrCopyConstructibleFromParam = hasConstructorFromType(anyOf(
       allOf(rValueReferenceType(),
             ignoringRefsAndConsts(equalsBoundNode("argumentCanonicalType"))),
       allOf(equalsBoundNode("argumentCanonicalType"),
             hasConstructor(isMoveConstructor()))));
 
-  // Does this type has template constructor which is move constructor
-  // from any type (like boost::any?)
-  auto IsPotentiallyCopyConstructibleFromParam =
+  // Matches to type that has template constructor which is
+  // move constructor from any type (like boost::any)
+  auto IsCopyConstructibleFromParamViaTemplate =
       hasConstructor(moveConstructorFromAnyType());
 
+  // Matches construct expr that
+  // * has one argument
+  // * that argument satisfies ArgumentMatcher
+  // * argument is not the result of move constructor
+  // * parameter of constructor satisfies ParameterMatcher
+  // * constructed type is move constructible from argument
+  // ** or is value constructible from argument and argument is movable
+  //    constructible
+  // ** constructed type has template constructor that can take by rref
+  //    (like boost::any)
   auto ConstructExprMatcher =
       cxxConstructExpr(
           hasType(qualType().bind("constructedType")), argumentCountIs(1),
-          hasArgument(0,
-                      hasType(qualType(hasCanonicalType(ignoringRefsAndConsts(
-                          qualType().bind("argumentCanonicalType")))))),
-          ctorCallee(hasParameter(0, ConstructorParameterMatcher)),
-          hasArgument(0, ConstructorArgumentMatcher),
+          unless(has(ignoringParenImpCasts(
+              cxxConstructExpr(ctorCallee(isMoveConstructor()))))),
+          hasArgument(0, hasType(hasCanonicalType(ignoringRefsAndConsts(
+                             qualType().bind("argumentCanonicalType"))))),
+          ctorCallee(hasParameter(0, ParameterMatcher)),
+          hasArgument(0, ArgumentMatcher),
           hasArgument(0, expr().bind("argument")),
           hasType(qualType(anyOf(IsMoveOrCopyConstructibleFromParam,
-                                 IsPotentiallyCopyConstructibleFromParam))))
+                                 IsCopyConstructibleFromParamViaTemplate))))
           .bind("construct");
 
   auto IsCopyOrMoveConstructor =
@@ -210,14 +227,12 @@ void ReturningTypeCheck::registerPPCallbacks(CompilerInstance &Compiler) {
 
 void ReturningTypeCheck::check(const MatchFinder::MatchResult &Result) {
   const LangOptions &Opts = Result.Context->getLangOpts();
-  
+
   const auto *Argument = Result.Nodes.getNodeAs<Expr>("argument");
   assert(Argument != nullptr);
 
   const auto *Type = Result.Nodes.getNodeAs<QualType>("constructedType");
   assert(Type != nullptr);
-
-  // TODO: Is it doing the same check as above or not?
   assert(!Type->isNull());
 
   std::string ReplacementText = Lexer::getSourceText(
