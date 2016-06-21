@@ -48,7 +48,7 @@ AST_MATCHER_P(CXXConstructExpr, ctorCallee,
           InnerMatcher.matches(*CtorDecl, Finder, Builder));
 }
 
-/// \brief Matches if the matched type after removing const and reference
+/// \brief Matches QualType which after removing const and reference
 /// matches the given matcher.
 AST_MATCHER_P(QualType, ignoringRefsAndConsts,
               ast_matchers::internal::Matcher<QualType>, InnerMatcher) {
@@ -66,10 +66,10 @@ AST_MATCHER(ParmVarDecl, hasDefaultArgument) { return Node.hasDefaultArg(); }
 /// \brief Matches function declarations which have all arguments defaulted
 /// except first.
 AST_MATCHER_FUNCTION(ast_matchers::internal::Matcher<FunctionDecl>,
-                     haveOneActiveArgument) {
+                     hasOneActiveArgument) {
   return anyOf(parameterCountIs(1),
                allOf(unless(parameterCountIs(0)),
-                     hasParameter(2, hasDefaultArgument())));
+                     hasParameter(1, hasDefaultArgument())));
 }
 
 /// \brief Matches declarations of template type which matches the given
@@ -91,7 +91,7 @@ AST_MATCHER_FUNCTION(ast_matchers::internal::Matcher<CXXConstructorDecl>,
   return cxxConstructorDecl(
       hasParent(functionTemplateDecl(has(templateTypeParmDecl(
           hasTemplateType(qualType().bind(TemplateArgument)))))),
-      haveOneActiveArgument(),
+      hasOneActiveArgument(),
       hasParameter(
           0, hasType(hasCanonicalType(allOf(
                  rValueReferenceType(),
@@ -115,7 +115,7 @@ AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
                        ast_matchers::internal::Matcher<QualType>,
                        InnerMatcher) {
   auto ConstructorMatcher = cxxConstructorDecl(
-      unless(isDeleted()), haveOneActiveArgument(),
+      unless(isDeleted()), hasOneActiveArgument(),
       hasParameter(0, hasType(hasCanonicalType(qualType(InnerMatcher)))));
 
   return hasConstructor(ConstructorMatcher);
@@ -243,7 +243,8 @@ void ReturningTypeCheck::check(const MatchFinder::MatchResult &Result) {
       Type->getAsString(getLangOpts()) + "(std::move(" + ReplacementText + "))";
 
   auto Diag = diag(Argument->getExprLoc(),
-                   "expression could be wrapped with std::move");
+                   "returned object is not moved; consider wrapping it with "
+                   "std::move or changing return type to avoid the copy");
   Diag << FixItHint::CreateReplacement(Argument->getSourceRange(),
                                        ReplacementText);
 

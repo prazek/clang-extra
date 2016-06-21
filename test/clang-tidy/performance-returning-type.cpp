@@ -57,7 +57,7 @@ public:
     case 'a':
       // Because SimpleClass is move constructible
       return a;
-    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: expression could be wrapped with std::move [performance-returning-type]
+    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: returned object is not moved; consider wrapping it with std::move or changing return type to avoid the copy [performance-returning-type]
     // CHECK-FIXES: {{^ *}}return FromValueClass(std::move(a));{{$}}
     case 'b':
       return b;
@@ -87,7 +87,7 @@ public:
     switch (k) {
     case 'a':
       return a;
-    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: expression could be wrapped with std::move [performance-returning-type]
+    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: {{..}}
     // CHECK-FIXES: {{^ *}}return FromRRefClass(std::move(a));{{$}}
 
     // We don't want to add std::move in cases 'b-f because
@@ -101,7 +101,6 @@ public:
       return e;
     case 'f':
       return f;
-    // We don't want to add std::move below because it is not necessary (TODO is that true?)
     case 'g':
       return simpleClassFoo();
     default:
@@ -119,7 +118,7 @@ public:
     switch (k) {
     case 'a':
       return a;
-    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: expression could be wrapped with std::move [performance-returning-type]
+    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: {{..}}
     // CHECK-FIXES: {{^ *}}return FromRRefClass(std::move(a));{{$}}
     case 'b':
       return b;
@@ -127,7 +126,7 @@ public:
       return c;
     case 'd':
       return *d;
-    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: expression could be wrapped with std::move [performance-returning-type]
+    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: {{..}}
     // CHECK-FIXES: {{^ *}}return FromRRefClass(std::move(*d));{{$}}
     case 'e':
       return e;
@@ -290,5 +289,17 @@ public:
     default:
       return SimpleClass();
     }
+  }
+};
+
+class FromRRefWithDefaultArgs {
+public:
+  FromRRefWithDefaultArgs(SimpleClass &&, int k = 0) {}
+  FromRRefWithDefaultArgs(const SimpleClass &) {}
+
+  FromRRefWithDefaultArgs foo(SimpleClass a) {
+    return a;
+    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: {{..}}
+    // CHECK-FIXES: {{^ *}}return FromRRefWithDefaultArgs(std::move(a));{{$}}
   }
 };

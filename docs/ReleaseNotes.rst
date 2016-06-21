@@ -245,10 +245,8 @@ identified.  The improvements since the 3.8 release include:
 - New `performance-returning-type
   <http://clang.llvm.org/extra/clang-tidy/checks/performance-returning-type.html>`_ check
 
-  This check finds places where we are returning object of a different type than
-  the function return type. In such places, we should use std::move, otherwise
-  the object will not be moved automatically.
-  Check adds std::move if it could be beneficial.
+  Adds `std::move` in returns statements where returned object is copied and
+  adding `std::move` can make it being moved.
 
 - New `performance-unnecessary-value-param
   <http://clang.llvm.org/extra/clang-tidy/checks/performance-unnecessary-value-param.html>`_ check
