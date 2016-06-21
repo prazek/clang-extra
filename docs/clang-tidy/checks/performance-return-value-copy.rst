@@ -1,6 +1,6 @@
-.. title:: clang-tidy - performance-returning-type
+.. title:: clang-tidy - performance-return-value-copy
 
-performance-returning-type
+performance-return-value-copy
 ==========================
 
 Adds `std::move` in returns statements where returned object is copied and

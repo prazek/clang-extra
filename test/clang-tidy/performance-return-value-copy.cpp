@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s performance-returning-type %t
+// RUN: %check_clang_tidy %s performance-return-value-copy %t
 // CHECK-FIXES: {{^}}#include <utility>{{$}}
 
 // we need std::move mock
@@ -57,7 +57,7 @@ public:
     case 'a':
       // Because SimpleClass is move constructible
       return a;
-    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: returned object is not moved; consider wrapping it with std::move or changing return type to avoid the copy [performance-returning-type]
+    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: returned object is not moved; consider wrapping it with std::move or changing return type to avoid the copy [performance-return-value-copy]
     // CHECK-FIXES: {{^ *}}return FromValueClass(std::move(a));{{$}}
     case 'b':
       return b;

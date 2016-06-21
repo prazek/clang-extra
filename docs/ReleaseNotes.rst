@@ -242,8 +242,8 @@ identified.  The improvements since the 3.8 release include:
   Warns about range-based loop with a loop variable of const ref type where the
   type of the variable does not match the one returned by the iterator.
 
-- New `performance-returning-type
-  <http://clang.llvm.org/extra/clang-tidy/checks/performance-returning-type.html>`_ check
+- New `performance-return-value-copy
+  <http://clang.llvm.org/extra/clang-tidy/checks/performance-return-value-copy.html>`_ check
 
   Adds `std::move` in returns statements where returned object is copied and
   adding `std::move` can make it being moved.

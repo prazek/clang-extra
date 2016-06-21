@@ -5,7 +5,7 @@ add_clang_library(clangTidyPerformanceModule
   ForRangeCopyCheck.cpp
   ImplicitCastInLoopCheck.cpp
   PerformanceTidyModule.cpp
-  ReturningTypeCheck.cpp
+  ReturnValueCopyCheck.cpp
   UnnecessaryCopyInitialization.cpp
   UnnecessaryValueParamCheck.cpp
 

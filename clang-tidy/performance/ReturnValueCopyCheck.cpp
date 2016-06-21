@@ -1,4 +1,4 @@
-//===--- ReturningTypeCheck.cpp - clang-tidy-------------------------------===//
+//===--- ReturnValueCopyCheck.cpp - clang-tidy-----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ReturningTypeCheck.h"
+#include "ReturnValueCopyCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -123,7 +123,7 @@ AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
 
 } // namespace
 
-void ReturningTypeCheck::registerMatchers(MatchFinder *Finder) {
+void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
   if (!getLangOpts().CPlusPlus11)
     return;
 
@@ -208,13 +208,13 @@ void ReturningTypeCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-ReturningTypeCheck::ReturningTypeCheck(StringRef Name,
+ReturnValueCopyCheck::ReturnValueCopyCheck(StringRef Name,
                                        ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
       IncludeStyle(utils::IncludeSorter::parseIncludeStyle(
           Options.get("IncludeStyle", "llvm"))) {}
 
-void ReturningTypeCheck::registerPPCallbacks(CompilerInstance &Compiler) {
+void ReturnValueCopyCheck::registerPPCallbacks(CompilerInstance &Compiler) {
   // Only register the preprocessor callbacks for C++; the functionality
   // currently does not provide any benefit to other languages, despite being
   // benign.
@@ -225,7 +225,7 @@ void ReturningTypeCheck::registerPPCallbacks(CompilerInstance &Compiler) {
   }
 }
 
-void ReturningTypeCheck::check(const MatchFinder::MatchResult &Result) {
+void ReturnValueCopyCheck::check(const MatchFinder::MatchResult &Result) {
   const LangOptions &Opts = Result.Context->getLangOpts();
 
   const auto *Argument = Result.Nodes.getNodeAs<Expr>("argument");

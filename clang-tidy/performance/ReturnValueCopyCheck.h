@@ -1,4 +1,4 @@
-//===--- ReturningTypeCheck.h - clang-tidy-----------------------*- C++ -*-===//
+//===--- ReturnValueCopyCheck.h - clang-tidy-----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_PERFORMANCE_RETURNING_TYPE_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_PERFORMANCE_RETURNING_TYPE_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_PERFORMANCE_RETURN_VALUE_COPY_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_PERFORMANCE_RETURN_VALUE_COPY_H
 
 #include "../ClangTidy.h"
 #include "../utils/IncludeInserter.h"
@@ -23,10 +23,10 @@ namespace performance {
 /// Check adds std::move if it could be beneficial.
 ///
 /// For the user-facing documentation see:
-/// http://clang.llvm.org/extra/clang-tidy/checks/performance-returning-type.html
-class ReturningTypeCheck : public ClangTidyCheck {
+/// http://clang.llvm.org/extra/clang-tidy/checks/performance-return-value-copy.html
+class ReturnValueCopyCheck : public ClangTidyCheck {
 public:
-  ReturningTypeCheck(StringRef Name, ClangTidyContext *Context);
+  ReturnValueCopyCheck(StringRef Name, ClangTidyContext *Context);
 
   void registerPPCallbacks(CompilerInstance &Compiler) override;
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
@@ -41,4 +41,4 @@ private:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_PERFORMANCE_RETURNING_TYPE_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_PERFORMANCE_RETURN_VALUE_COPY_H
