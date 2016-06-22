@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReturnValueCopyCheck.h"
+#include "../utils/Matchers.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -16,6 +17,7 @@
 
 using namespace clang::ast_matchers;
 using namespace llvm;
+using namespace clang::tidy::matchers;
 
 namespace clang {
 namespace tidy {
@@ -105,15 +107,16 @@ AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
                        ast_matchers::internal::Matcher<CXXConstructorDecl>,
                        InnerMatcher) {
   return hasDeclaration(
-      cxxRecordDecl(hasDescendant(cxxConstructorDecl(InnerMatcher))));
+      cxxRecordDecl(hasMethod(cxxConstructorDecl(InnerMatcher))));
 }
 
 /// \brief Matches to qual types which has constructors from type that matches
 /// the given matcher.
 AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
-                       hasConstructorFromType,
+                       isConstructibleFromType,
                        ast_matchers::internal::Matcher<QualType>,
                        InnerMatcher) {
+  // FIXME: Consider conversion operators...
   auto ConstructorMatcher = cxxConstructorDecl(
       unless(isDeleted()), hasOneActiveArgument(),
       hasParameter(0, hasType(hasCanonicalType(qualType(InnerMatcher)))));
@@ -128,7 +131,7 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
     return;
 
   // Matches to type with after ignoring refs and consts is the same as
-  // "constructedType"
+  // "constructedType".
   auto HasTypeSameAsConstructed = hasType(hasCanonicalType(
       ignoringRefsAndConsts(equalsBoundNode("constructedType"))));
 
@@ -139,7 +142,7 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
       hasCanonicalType(qualType(anyOf(referenceType(), isConstQualified())))));
 
   // Matches to expression expression that have declaration with is reference or
-  // const
+  // const.
   auto IsDeclaredAsRefOrConstType =
       anyOf(hasDescendant(declRefExpr(to(RefOrConstVarDecl))),
             declRefExpr(to(RefOrConstVarDecl)));
@@ -162,14 +165,14 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
   // Matches to type constructible from argumentCanonicalType type
   // * by r reference or
   // * by value, and argumentCanonicalType is move constructible
-  auto IsMoveOrCopyConstructibleFromParam = hasConstructorFromType(anyOf(
+  auto IsMoveOrCopyConstructibleFromParam = isConstructibleFromType(anyOf(
       allOf(rValueReferenceType(),
             ignoringRefsAndConsts(equalsBoundNode("argumentCanonicalType"))),
       allOf(equalsBoundNode("argumentCanonicalType"),
             hasConstructor(isMoveConstructor()))));
 
   // Matches to type that has template constructor which is
-  // move constructor from any type (like boost::any)
+  // move constructor from any type (like boost::any).
   auto IsCopyConstructibleFromParamViaTemplate =
       hasConstructor(moveConstructorFromAnyType());
 
@@ -201,7 +204,7 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
       anyOf(isCopyConstructor(), isMoveConstructor());
 
   Finder->addMatcher(
-      returnStmt(has(ignoringParenImpCasts(cxxConstructExpr(
+      returnStmt(has(ignoringImplicit(cxxConstructExpr(
                      ctorCallee(IsCopyOrMoveConstructor),
                      has(ignoringParenImpCasts(ConstructExprMatcher))))))
           .bind("return"),
@@ -209,7 +212,7 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 ReturnValueCopyCheck::ReturnValueCopyCheck(StringRef Name,
-                                       ClangTidyContext *Context)
+                                           ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
       IncludeStyle(utils::IncludeSorter::parseIncludeStyle(
           Options.get("IncludeStyle", "llvm"))) {}
