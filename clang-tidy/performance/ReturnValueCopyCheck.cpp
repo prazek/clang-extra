@@ -8,9 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReturnValueCopyCheck.h"
-#include "../utils/Matchers.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "../utils/Matchers.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
@@ -62,19 +61,18 @@ AST_MATCHER_P(QualType, ignoringRefsAndConsts,
   return InnerMatcher.matches(Unqualified, Finder, Builder);
 }
 
-/// \brief Matches ParmVarDecls which have default arguments.
-AST_MATCHER(ParmVarDecl, hasDefaultArgument) { return Node.hasDefaultArg(); }
+/// \brief Matches ParmVarDecl which has default argument.
+AST_MATCHER(ParmVarDecl, hasDefaultArg) { return Node.hasDefaultArg(); }
 
-/// \brief Matches function declarations which have all arguments defaulted
+/// \brief Matches function declaration which has all parameters defaulted
 /// except first.
 AST_MATCHER_FUNCTION(ast_matchers::internal::Matcher<FunctionDecl>,
-                     hasOneActiveArgument) {
-  return anyOf(parameterCountIs(1),
-               allOf(unless(parameterCountIs(0)),
-                     hasParameter(1, hasDefaultArgument())));
+                     hasOneNonDefaultedParam) {
+  return anyOf(parameterCountIs(1), allOf(unless(parameterCountIs(0)),
+                                          hasParameter(1, hasDefaultArg())));
 }
 
-/// \brief Matches declarations of template type which matches the given
+/// \brief Matches declaration of template type which matches the given
 /// matcher.
 AST_MATCHER_P(TemplateTypeParmDecl, hasTemplateType,
               ast_matchers::internal::Matcher<QualType>, InnerMatcher) {
@@ -83,42 +81,26 @@ AST_MATCHER_P(TemplateTypeParmDecl, hasTemplateType,
   return InnerMatcher.matches(TemplateType, Finder, Builder);
 }
 
-/// \brief Matches constructor declarations which are templates and can be used
-/// to move-construct from any type.
-AST_MATCHER_FUNCTION(ast_matchers::internal::Matcher<CXXConstructorDecl>,
-                     moveConstructorFromAnyType) {
-  // Potentially danger: this matcher binds a name, with probably
-  // mean that you cant use it twice in your check!
-  const char TemplateArgument[] = "templateArgument";
-  return cxxConstructorDecl(
-      hasParent(functionTemplateDecl(has(templateTypeParmDecl(
-          hasTemplateType(qualType().bind(TemplateArgument)))))),
-      hasOneActiveArgument(),
-      hasParameter(
-          0, hasType(hasCanonicalType(allOf(
-                 rValueReferenceType(),
-                 ignoringRefsAndConsts(equalsBoundNode(TemplateArgument)))))));
-}
-
-/// \brief Matches to qual types which are cxx records and has constructors that
-/// matches the given matcher.
+/// \brief Matches a QualType which is CXXRecord and whose declaration has
+/// a constructor that matches the given matcher.
 AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
                        hasConstructor,
                        ast_matchers::internal::Matcher<CXXConstructorDecl>,
                        InnerMatcher) {
-  return hasDeclaration(
-      cxxRecordDecl(hasMethod(cxxConstructorDecl(InnerMatcher))));
+  auto CtorMatcher = cxxConstructorDecl(InnerMatcher);
+  return hasDeclaration(cxxRecordDecl(
+      anyOf(has(CtorMatcher), has(functionTemplateDecl(has(CtorMatcher))))));
 }
 
-/// \brief Matches to qual types which has constructors from type that matches
-/// the given matcher.
+/// \brief Matches a QualType whose declaration has a converting constructor
+/// accepting an argument of the type from the given inner matcher.
 AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
                        isConstructibleFromType,
                        ast_matchers::internal::Matcher<QualType>,
                        InnerMatcher) {
   // FIXME: Consider conversion operators...
   auto ConstructorMatcher = cxxConstructorDecl(
-      unless(isDeleted()), hasOneActiveArgument(),
+      unless(isDeleted()), hasOneNonDefaultedParam(),
       hasParameter(0, hasType(hasCanonicalType(qualType(InnerMatcher)))));
 
   return hasConstructor(ConstructorMatcher);
@@ -130,8 +112,8 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
   if (!getLangOpts().CPlusPlus11)
     return;
 
-  // Matches to type with after ignoring refs and consts is the same as
-  // "constructedType".
+  // Matches a QualType which after ignoring refs and consts has the same type
+  // as node bound to "constructedType".
   auto HasTypeSameAsConstructed = hasType(hasCanonicalType(
       ignoringRefsAndConsts(equalsBoundNode("constructedType"))));
 
@@ -141,8 +123,8 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
   auto RefOrConstVarDecl = varDecl(hasType(
       hasCanonicalType(qualType(anyOf(referenceType(), isConstQualified())))));
 
-  // Matches to expression expression that have declaration with is reference or
-  // const.
+  // Matches a expression whose declaration has type which is const or
+  // reference.
   auto IsDeclaredAsRefOrConstType =
       anyOf(hasDescendant(declRefExpr(to(RefOrConstVarDecl))),
             declRefExpr(to(RefOrConstVarDecl)));
@@ -162,7 +144,7 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
                    IsDeclaredAsRefOrConstType, cxxTemporaryObjectExpr(),
                    hasDescendant(cxxTemporaryObjectExpr())));
 
-  // Matches to type constructible from argumentCanonicalType type
+  // Matches a QualType which is constructible from argumentCanonicalType type
   // * by r reference or
   // * by value, and argumentCanonicalType is move constructible
   auto IsMoveOrCopyConstructibleFromParam = isConstructibleFromType(anyOf(
@@ -171,10 +153,22 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
       allOf(equalsBoundNode("argumentCanonicalType"),
             hasConstructor(isMoveConstructor()))));
 
-  // Matches to type that has template constructor which is
-  // move constructor from any type (like boost::any).
+  // Matches a constructor declaration which is template and can be used
+  // to move-construct from any type.
+  static const char TemplateArgument[] = "templateArgument";
+  auto MoveConstructorFromAnyType = cxxConstructorDecl(
+      hasParent(functionTemplateDecl(has(templateTypeParmDecl(
+          hasTemplateType(qualType().bind(TemplateArgument)))))),
+      hasOneNonDefaultedParam(),
+      hasParameter(
+          0, hasType(hasCanonicalType(allOf(
+                 rValueReferenceType(),
+                 ignoringRefsAndConsts(equalsBoundNode(TemplateArgument)))))));
+
+  // Matches a QualType that has template move constructor from any type
+  // (like boost::any).
   auto IsCopyConstructibleFromParamViaTemplate =
-      hasConstructor(moveConstructorFromAnyType());
+      hasConstructor(MoveConstructorFromAnyType);
 
   // Matches construct expr that
   // * has one argument

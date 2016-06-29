@@ -17,10 +17,8 @@ namespace clang {
 namespace tidy {
 namespace performance {
 
-/// This check finds places where we are returning object of a different type than
-/// the function return type. In such places, we should use std::move, otherwise
-/// the object will not be moved automatically.
-/// Check adds std::move if it could be beneficial.
+/// Adds `std::move` in returns statements where returned object is copied and
+/// adding `std::move` can make it being moved.
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/performance-return-value-copy.html
