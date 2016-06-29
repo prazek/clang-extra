@@ -24,6 +24,11 @@ namespace performance {
 
 namespace {
 
+const char TemplateArgumentName[] = "templateArgument";
+const char ConstructedTypeName[] = "constructedType";
+const char ConstructorArgumentName[] = "argument";
+const char ArgumentCanonicalTypeName[] = "argumentCanonicalType";
+
 /// \brief Matches if the construct expression's callee's declaration matches
 /// the given matcher.
 ///
@@ -93,7 +98,7 @@ AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
 }
 
 /// \brief Matches a QualType whose declaration has a converting constructor
-/// accepting an argument of the type from the given inner matcher.
+/// accepting an argument of the type from the given matcher.
 AST_MATCHER_FUNCTION_P(ast_matchers::internal::Matcher<QualType>,
                        isConstructibleFromType,
                        ast_matchers::internal::Matcher<QualType>,
@@ -113,9 +118,9 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
     return;
 
   // Matches a QualType which after ignoring refs and consts has the same type
-  // as node bound to "constructedType".
+  // as node bound to ConstructedTypeName.
   auto HasTypeSameAsConstructed = hasType(hasCanonicalType(
-      ignoringRefsAndConsts(equalsBoundNode("constructedType"))));
+      ignoringRefsAndConsts(equalsBoundNode(ConstructedTypeName))));
 
   auto HasRvalueReferenceType =
       hasType(hasCanonicalType(qualType(rValueReferenceType())));
@@ -129,7 +134,7 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
       anyOf(hasDescendant(declRefExpr(to(RefOrConstVarDecl))),
             declRefExpr(to(RefOrConstVarDecl)));
 
-  // Constructor parameter must not already be rreference
+  // Constructor parameter must not already be rreference.
   auto ParameterMatcher =
       hasType(hasCanonicalType(qualType(unless(rValueReferenceType()))));
 
@@ -149,21 +154,20 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
   // * by value, and argumentCanonicalType is move constructible
   auto IsMoveOrCopyConstructibleFromParam = isConstructibleFromType(anyOf(
       allOf(rValueReferenceType(),
-            ignoringRefsAndConsts(equalsBoundNode("argumentCanonicalType"))),
-      allOf(equalsBoundNode("argumentCanonicalType"),
+            ignoringRefsAndConsts(equalsBoundNode(ArgumentCanonicalTypeName))),
+      allOf(equalsBoundNode(ArgumentCanonicalTypeName),
             hasConstructor(isMoveConstructor()))));
 
   // Matches a constructor declaration which is template and can be used
   // to move-construct from any type.
-  static const char TemplateArgument[] = "templateArgument";
   auto MoveConstructorFromAnyType = cxxConstructorDecl(
       hasParent(functionTemplateDecl(has(templateTypeParmDecl(
-          hasTemplateType(qualType().bind(TemplateArgument)))))),
+          hasTemplateType(qualType().bind(TemplateArgumentName)))))),
       hasOneNonDefaultedParam(),
       hasParameter(
           0, hasType(hasCanonicalType(allOf(
                  rValueReferenceType(),
-                 ignoringRefsAndConsts(equalsBoundNode(TemplateArgument)))))));
+                 ignoringRefsAndConsts(equalsBoundNode(TemplateArgumentName)))))));
 
   // Matches a QualType that has template move constructor from any type
   // (like boost::any).
@@ -182,14 +186,14 @@ void ReturnValueCopyCheck::registerMatchers(MatchFinder *Finder) {
   //    (like boost::any)
   auto ConstructExprMatcher =
       cxxConstructExpr(
-          hasType(qualType().bind("constructedType")), argumentCountIs(1),
+          hasType(qualType().bind(ConstructedTypeName)), argumentCountIs(1),
           unless(has(ignoringParenImpCasts(
               cxxConstructExpr(ctorCallee(isMoveConstructor()))))),
           hasArgument(0, hasType(hasCanonicalType(ignoringRefsAndConsts(
-                             qualType().bind("argumentCanonicalType"))))),
+                             qualType().bind(ArgumentCanonicalTypeName))))),
           ctorCallee(hasParameter(0, ParameterMatcher)),
           hasArgument(0, ArgumentMatcher),
-          hasArgument(0, expr().bind("argument")),
+          hasArgument(0, expr().bind(ConstructorArgumentName)),
           hasType(qualType(anyOf(IsMoveOrCopyConstructibleFromParam,
                                  IsCopyConstructibleFromParamViaTemplate))))
           .bind("construct");
@@ -225,10 +229,10 @@ void ReturnValueCopyCheck::registerPPCallbacks(CompilerInstance &Compiler) {
 void ReturnValueCopyCheck::check(const MatchFinder::MatchResult &Result) {
   const LangOptions &Opts = Result.Context->getLangOpts();
 
-  const auto *Argument = Result.Nodes.getNodeAs<Expr>("argument");
+  const auto *Argument = Result.Nodes.getNodeAs<Expr>(ConstructorArgumentName);
   assert(Argument != nullptr);
 
-  const auto *Type = Result.Nodes.getNodeAs<QualType>("constructedType");
+  const auto *Type = Result.Nodes.getNodeAs<QualType>(ConstructedTypeName);
   assert(Type != nullptr);
   assert(!Type->isNull());
 
