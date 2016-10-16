@@ -12,7 +12,6 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "ArgumentCommentCheck.h"
 #include "AssertSideEffectCheck.h"
-#include "BadExceptionTypeCheck.h"
 #include "BoolPointerImplicitConversionCheck.h"
 #include "DanglingHandleCheck.h"
 #include "DefaultNumericsCheck.h"
@@ -23,6 +22,7 @@
 #include "InaccurateEraseCheck.h"
 #include "IncorrectRoundings.h"
 #include "InefficientAlgorithmCheck.h"
+#include "InvalidatedIteratorsCheck.h"
 #include "LambdaFunctionNameCheck.h"
 #include "MacroParenthesesCheck.h"
 #include "MacroRepeatedSideEffectsCheck.h"
@@ -93,6 +93,8 @@ public:
         "misc-incorrect-roundings");
     CheckFactories.registerCheck<InefficientAlgorithmCheck>(
         "misc-inefficient-algorithm");
+    CheckFactories.registerCheck<InvalidatedIteratorsCheck>(
+        "misc-invalidated-iterators");
     CheckFactories.registerCheck<MacroParenthesesCheck>(
         "misc-macro-parentheses");
     CheckFactories.registerCheck<MacroRepeatedSideEffectsCheck>(
