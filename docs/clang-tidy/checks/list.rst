@@ -4,6 +4,7 @@ Clang-Tidy Checks
 =================
 
 .. toctree::
+   boost-lexical-cast-redundant-type
    boost-use-to-string
    cert-dcl03-c (redirects to misc-static-assert) <cert-dcl03-c>
    cert-dcl50-cpp
