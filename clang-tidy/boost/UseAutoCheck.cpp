@@ -38,8 +38,9 @@ void UseAutoCheck::check(const MatchFinder::MatchResult &Result) {
   auto TypeRange = FirstDecl->getTypeSourceInfo()->getTypeLoc()
     .getSourceRange();
 
-  diag(TypeRange.getBegin(), "redundant type for lexical_calst; use auto "
-    "instead ") << FixItHint::CreateReplacement(TypeRange, "auto");
+  diag(TypeRange.getBegin(),
+       "redundant type for lexical_cast; use auto instead")
+    << FixItHint::CreateReplacement(TypeRange, "auto");
 }
 
 } // namespace boost
