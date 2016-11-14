@@ -14,6 +14,7 @@
 #include "HeaderGuardCheck.h"
 #include "IncludeOrderCheck.h"
 #include "TwineLocalCheck.h"
+#include "UseAutoCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -24,6 +25,8 @@ public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.registerCheck<LLVMHeaderGuardCheck>("llvm-header-guard");
     CheckFactories.registerCheck<IncludeOrderCheck>("llvm-include-order");
+    CheckFactories.registerCheck<UseAutoCheck>(
+        "llvm-use-auto");
     CheckFactories.registerCheck<readability::NamespaceCommentCheck>(
         "llvm-namespace-comment");
     CheckFactories.registerCheck<TwineLocalCheck>("llvm-twine-local");
