@@ -1,10 +1,9 @@
 // RUN: %check_clang_tidy %s misc-invalidated-iterators %t
 
-
 // Sample std::vector implementation.
 namespace std {
 
-template<typename Type>
+template <typename Type>
 class vector {
   Type tmp;
 
@@ -17,18 +16,15 @@ public:
     Type &operator*() { return *data; }
   };
 
-  vector() { }
+  vector() {}
 
-  void push_back(Type &&elem) { }
+  void push_back(Type &&elem) {}
 
   Type &operator[](int position) { return tmp; }
 
   iterator begin() { return iterator(&tmp); }
 };
-
 }
-
-
 
 // Correct std::vector use.
 void correct_sample() {
@@ -43,7 +39,6 @@ void correct_sample() {
   int *ElemPtr = &VecGood[0];
   (*ElemPtr)++;
 }
-
 
 // Incorrect std::vector use.
 void incorrect_sample() {

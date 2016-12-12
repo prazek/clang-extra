@@ -19,15 +19,13 @@ namespace misc {
 
 /// Visitor which tracks all modifications of containers that might
 /// invalidate many references/iterators/pointers.
-class ContainerTrackingVisitor : public clang::RecursiveASTVisitor<ContainerTrackingVisitor> {
+class ContainerTrackingVisitor
+    : public clang::RecursiveASTVisitor<ContainerTrackingVisitor> {
 public:
   ContainerTrackingVisitor(const Expr *RefExpr, const Expr *ContainerExpr) {
     // TODO write constructor
   }
-
 };
-
-
 
 /// FIXME: Write a short description.
 ///
