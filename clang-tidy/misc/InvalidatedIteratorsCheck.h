@@ -11,10 +11,23 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_INVALIDATED_ITERATORS_H
 
 #include "../ClangTidy.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 
 namespace clang {
 namespace tidy {
 namespace misc {
+
+/// Visitor which tracks all modifications of containers that might
+/// invalidate many references/iterators/pointers.
+class ContainerTrackingVisitor : public clang::RecursiveASTVisitor<ContainerTrackingVisitor> {
+public:
+  ContainerTrackingVisitor(const Expr *RefExpr, const Expr *ContainerExpr) {
+    // TODO write constructor
+  }
+
+};
+
+
 
 /// FIXME: Write a short description.
 ///
