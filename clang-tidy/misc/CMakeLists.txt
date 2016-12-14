@@ -6,6 +6,7 @@ add_clang_library(clangTidyMiscModule
   BadExceptionTypeCheck.cpp
   BoolToIntegerConversionCheck.cpp
   DefaultNumericsCheck.cpp
+  ForLoopIteratorInvalidationCheck.cpp
   ForwardingReferenceOverloadCheck.cpp
   InvalidatedIteratorsCheck.cpp
   LambdaFunctionNameCheck.cpp

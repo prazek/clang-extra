@@ -81,6 +81,7 @@ Clang-Tidy Checks
    misc-default-numerics
    misc-definitions-in-headers
    misc-fold-init-type
+   misc-for-loop-iterator-invalidation
    misc-forward-declaration-namespace
    misc-forwarding-reference-overload
    misc-inaccurate-erase

@@ -105,6 +105,12 @@ Improvements to clang-tidy
   Finds and replaces explicit calls to the constructor in a return statement by
   a braced initializer list so that the return type is not needlessly repeated.
 
+- New `misc-for-loop-iterator-invalidation
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-for-loop-iterator-invalidation.html>`_ check
+
+  Finds suspicious method calls on objects iterated using C++11 for-range loop.
+  If such call can invalidate iterators then behaviour is undefined.
+
 - Improved `modernize-use-emplace
   <http://clang.llvm.org/extra/clang-tidy/checks/modernize-use-emplace.html>`_ check
 

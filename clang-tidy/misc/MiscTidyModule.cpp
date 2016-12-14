@@ -19,6 +19,7 @@
 #include "DefaultNumericsCheck.h"
 #include "DefinitionsInHeadersCheck.h"
 #include "FoldInitTypeCheck.h"
+#include "ForLoopIteratorInvalidationCheck.h"
 #include "ForwardDeclarationNamespaceCheck.h"
 #include "ForwardingReferenceOverloadCheck.h"
 #include "InaccurateEraseCheck.h"
@@ -79,6 +80,8 @@ public:
     CheckFactories.registerCheck<BoolToIntegerConversionCheck>(
         "misc-bool-to-integer-conversion");
     CheckFactories.registerCheck<DefaultNumericsCheck>("misc-default-numerics");
+    CheckFactories.registerCheck<ForLoopIteratorInvalidationCheck>(
+        "misc-for-loop-iterator-invalidation");
     CheckFactories.registerCheck<ForwardingReferenceOverloadCheck>(
         "misc-forwarding-reference-overload");
     CheckFactories.registerCheck<LambdaFunctionNameCheck>(
