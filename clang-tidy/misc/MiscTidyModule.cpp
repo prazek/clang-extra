@@ -16,6 +16,7 @@
 #include "DanglingHandleCheck.h"
 #include "DefinitionsInHeadersCheck.h"
 #include "FoldInitTypeCheck.h"
+#include "ForLoopInvalidationCheck.h"
 #include "ForwardDeclarationNamespaceCheck.h"
 #include "ForwardingReferenceOverloadCheck.h"
 #include "InaccurateEraseCheck.h"
@@ -67,6 +68,8 @@ public:
     CheckFactories.registerCheck<ArgumentCommentCheck>("misc-argument-comment");
     CheckFactories.registerCheck<AssertSideEffectCheck>(
         "misc-assert-side-effect");
+    CheckFactories.registerCheck<ForLoopInvalidationCheck>(
+        "misc-for-loop-invalidation");
     CheckFactories.registerCheck<ForwardingReferenceOverloadCheck>(
         "misc-forwarding-reference-overload");
     CheckFactories.registerCheck<LambdaFunctionNameCheck>(
