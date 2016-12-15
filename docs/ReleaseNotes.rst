@@ -126,7 +126,7 @@ Improvements to clang-tidy
   <http://clang.llvm.org/extra/clang-tidy/checks/obvious-invalid-range.html>`_ check
 
   Warns if algorithm is used with ``.begin()`` and ``.end()`` from different
-  variables.
+  container.
 
 - New `performance-inefficient-string-concatenation
   <http://clang.llvm.org/extra/clang-tidy/checks/performance-inefficient-string-concatenation.html>`_ check
