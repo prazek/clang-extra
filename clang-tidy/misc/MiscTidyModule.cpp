@@ -20,7 +20,6 @@
 #include "InaccurateEraseCheck.h"
 #include "IncorrectRoundings.h"
 #include "InefficientAlgorithmCheck.h"
-#include "InvalidRangeCheck.h"
 #include "MacroParenthesesCheck.h"
 #include "MacroRepeatedSideEffectsCheck.h"
 #include "MisplacedConstCheck.h"
@@ -64,7 +63,6 @@ public:
     CheckFactories.registerCheck<ArgumentCommentCheck>("misc-argument-comment");
     CheckFactories.registerCheck<AssertSideEffectCheck>(
         "misc-assert-side-effect");
-    CheckFactories.registerCheck<InvalidRangeCheck>("misc-invalid-range");
     CheckFactories.registerCheck<MisplacedConstCheck>("misc-misplaced-const");
     CheckFactories.registerCheck<UnconventionalAssignOperatorCheck>(
         "misc-unconventional-assign-operator");

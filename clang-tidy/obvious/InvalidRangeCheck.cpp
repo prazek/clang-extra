@@ -14,7 +14,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
-namespace misc {
+namespace obvious {
 
 const std::string CXX_AlgorithmNames =
     "std::for_each; std::find; std::find_if; std::find_end; "
@@ -33,11 +33,11 @@ const std::string CXX_AlgorithmNames =
     "std::set_symetric_difference; std::push_heap; std::pop_heap"
     "std::make_heap; std::sort_heap; std::min; std::max; std::min_element; "
     "std::max_element; std::lexicographical_compare; std::next_permutation; "
-    "std::prev_permutation;";
+    "std::prev_permutation";
 
 const auto CXX11_AlgorithmNames =
-    CXX_AlgorithmNames +
-    "; std::all_of; std::any_of; std::none_of; std::find_if_not; "
+    CXX_AlgorithmNames + "; "
+    "std::all_of; std::any_of; std::none_of; std::find_if_not; "
     "std::is_permutation; std::copy_n; std::copy_if; std::move; "
     "std::move_backward; std::shuffle; std::is_partitioned;"
     "std::partition_copy; std::partition_point; std::is_sorted"
@@ -91,6 +91,6 @@ void InvalidRangeCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
                 utils::options::serializeStringList(AlgorithmNames));
 }
 
-} // namespace misc
+} // namespace obvious
 } // namespace tidy
 } // namespace clang

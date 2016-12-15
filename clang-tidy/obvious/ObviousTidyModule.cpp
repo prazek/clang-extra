@@ -11,6 +11,7 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 
+#include "InvalidRangeCheck.h"
 using namespace clang::ast_matchers;
 
 namespace clang {
@@ -20,7 +21,7 @@ namespace obvious {
 class ObviousModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
-    // Add obvious checks here.
+    CheckFactories.registerCheck<InvalidRangeCheck>("misc-invalid-range");
   }
 };
 

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_INVALID_RANGE_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_INVALID_RANGE_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_OBVIOUS_INVALID_RANGE_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_OBVIOUS_INVALID_RANGE_H
 
 #include "../ClangTidy.h"
 #include <string>
@@ -16,7 +16,7 @@
 
 namespace clang {
 namespace tidy {
-namespace misc {
+namespace obvious {
 
 /// Find invalid call to algorithm with obviously invalid range of iterators.
 ///
@@ -37,4 +37,4 @@ private:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_INVALID_RANGE_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_OBVIOUS_INVALID_RANGE_H
