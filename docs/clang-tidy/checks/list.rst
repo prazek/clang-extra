@@ -85,6 +85,7 @@ Clang-Tidy Checks
    misc-incorrect-roundings
    misc-inefficient-algorithm
    misc-lambda-function-name
+   misc-invalid-range
    misc-macro-parentheses
    misc-macro-repeated-side-effects
    misc-misplaced-const

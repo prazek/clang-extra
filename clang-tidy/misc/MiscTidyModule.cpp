@@ -23,6 +23,7 @@
 #include "IncorrectRoundings.h"
 #include "InefficientAlgorithmCheck.h"
 #include "LambdaFunctionNameCheck.h"
+#include "InvalidRangeCheck.h"
 #include "MacroParenthesesCheck.h"
 #include "MacroRepeatedSideEffectsCheck.h"
 #include "MisplacedConstCheck.h"
@@ -73,6 +74,7 @@ public:
         "misc-forwarding-reference-overload");
     CheckFactories.registerCheck<LambdaFunctionNameCheck>(
         "misc-lambda-function-name");
+    CheckFactories.registerCheck<InvalidRangeCheck>("misc-invalid-range");
     CheckFactories.registerCheck<MisplacedConstCheck>("misc-misplaced-const");
     CheckFactories.registerCheck<UnconventionalAssignOperatorCheck>(
         "misc-unconventional-assign-operator");

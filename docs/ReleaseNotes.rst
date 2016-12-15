@@ -75,6 +75,19 @@ Improvements to clang-tidy
 
 - Improved `cppcoreguidelines-no-malloc
   <http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-no-malloc.html>`_ check
+  warns if C-style memory management is used and suggests the use of RAII.
+
+- New `misc-invalid-range
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-invalid-range.html>`_ check
+
+  Warns if algorithm is used with ``.begin()`` and ``.end()`` from different
+  variables.
+
+- `modernize-make-unique
+  <http://clang.llvm.org/extra/clang-tidy/checks/modernize-make-unique.html>`_
+  and `modernize-make-shared
+  <http://clang.llvm.org/extra/clang-tidy/checks/modernize-make-shared.html>`_
+  now handle calls to the smart pointer's ``reset()`` method.
 
   Allow custom memory management functions to be considered as well.
 
