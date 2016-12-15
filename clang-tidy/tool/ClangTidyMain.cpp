@@ -465,6 +465,11 @@ extern volatile int MPIModuleAnchorSource;
 static int LLVM_ATTRIBUTE_UNUSED MPIModuleAnchorDestination =
     MPIModuleAnchorSource;
 
+// This anchor is used to force the linker to link the ObviousModule.
+extern volatile int ObviousModuleAnchorSource;
+static int LLVM_ATTRIBUTE_UNUSED ObviousModuleAnchorDestination =
+  ObviousModuleAnchorSource;
+
 // This anchor is used to force the linker to link the PerformanceModule.
 extern volatile int PerformanceModuleAnchorSource;
 static int LLVM_ATTRIBUTE_UNUSED PerformanceModuleAnchorDestination =

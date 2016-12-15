@@ -65,6 +65,9 @@ Name prefix            Description
 ``modernize-``         Checks that advocate usage of modern (currently "modern"
                        means "C++11") language constructs.
 ``mpi-``               Checks related to MPI (Message Passing Interface).
+``obvious-``           Checks for obvious bugs that probably won't be found
+                       in working code, but can be found while looking for an
+                       obvious bug in broken code.
 ``performance-``       Checks that target performance-related issues.
 ``readability-``       Checks that target readability-related issues that don't
                        relate to any particular coding style.
