@@ -293,7 +293,7 @@ static CheckersList getCheckersControlList(GlobList &Filter) {
   CheckersList List;
 
   const auto &RegisteredCheckers =
-      AnalyzerOptions::getRegisteredCheckers(/*IncludeExperimental=*/false);
+      AnalyzerOptions::getRegisteredCheckers(/*IncludeExperimental=*/true);
   bool AnalyzerChecksEnabled = false;
   for (StringRef CheckName : RegisteredCheckers) {
     std::string ClangTidyCheckName((AnalyzerCheckNamePrefix + CheckName).str());

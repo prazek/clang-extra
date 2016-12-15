@@ -66,6 +66,7 @@ Clang-Tidy Checks
    misc-inaccurate-erase
    misc-incorrect-roundings
    misc-inefficient-algorithm
+   misc-invalid-range
    misc-macro-parentheses
    misc-macro-repeated-side-effects
    misc-misplaced-const
