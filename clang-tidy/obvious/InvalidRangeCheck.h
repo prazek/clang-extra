@@ -33,7 +33,7 @@ private:
   std::vector<std::string> AlgorithmNames;
 };
 
-} // namespace misc
+} // namespace obvious
 } // namespace tidy
 } // namespace clang
 

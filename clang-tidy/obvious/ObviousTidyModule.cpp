@@ -21,7 +21,7 @@ namespace obvious {
 class ObviousModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
-    CheckFactories.registerCheck<InvalidRangeCheck>("misc-invalid-range");
+    CheckFactories.registerCheck<InvalidRangeCheck>("obvious-invalid-range");
   }
 };
 

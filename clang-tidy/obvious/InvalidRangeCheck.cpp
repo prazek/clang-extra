@@ -67,6 +67,8 @@ void InvalidRangeCheck::registerMatchers(MatchFinder *Finder) {
         onImplicitObjectArgument(declRefExpr().bind(BindThisName)));
   };
   // FIXME: match for std::begin(arg) and std::end(arg2)
+  // FIXME: some algorithms like std::list::splice(It, list, It, It) take
+  // range as 3rd and 4th argument.
   Finder->addMatcher(
       callExpr(hasArgument(0, MemberCallWithName("begin", "first_arg")),
                hasArgument(1, MemberCallWithName("end", "second_arg")),
@@ -75,7 +77,6 @@ void InvalidRangeCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void InvalidRangeCheck::check(const MatchFinder::MatchResult &Result) {
-
   const auto *FirstArg = Result.Nodes.getNodeAs<DeclRefExpr>("first_arg");
   const auto *SecondArg = Result.Nodes.getNodeAs<DeclRefExpr>("second_arg");
   if (FirstArg->getNameInfo().getAsString() ==

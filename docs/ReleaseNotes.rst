@@ -85,12 +85,6 @@ Improvements to clang-tidy
   <http://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-no-malloc.html>`_ check
   warns if C-style memory management is used and suggests the use of RAII.
 
-- New `misc-invalid-range
-  <http://clang.llvm.org/extra/clang-tidy/checks/misc-invalid-range.html>`_ check
-
-  Warns if algorithm is used with ``.begin()`` and ``.end()`` from different
-  variables.
-
 - `modernize-make-unique
   <http://clang.llvm.org/extra/clang-tidy/checks/modernize-make-unique.html>`_
   and `modernize-make-shared
@@ -124,6 +118,15 @@ Improvements to clang-tidy
   <http://clang.llvm.org/extra/clang-tidy/checks/mpi-type-mismatch.html>`_ check
 
   Flags MPI function calls with a buffer type and MPI data type mismatch.
+
+- New obvious module with checks for obvious bugs that probably won't be found
+  in working code, but can be found while looking for an obvious bug in broken
+  code.
+- New `obvious-invalid-range
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-invalid-range.html>`_ check
+
+  Warns if algorithm is used with ``.begin()`` and ``.end()`` from different
+  variables.
 
 - New `performance-inefficient-string-concatenation
   <http://clang.llvm.org/extra/clang-tidy/checks/performance-inefficient-string-concatenation.html>`_ check

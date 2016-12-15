@@ -1,7 +1,7 @@
-.. title:: clang-tidy - misc-invalid-range
+.. title:: clang-tidy - obvious-invalid-range
 
-misc-invalid-range
-==================
+obvious-invalid-range
+=====================
 
 This check finds invalid calls to algorithms with obviously invalid range of
 iterators like:

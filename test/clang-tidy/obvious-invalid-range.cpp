@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s misc-invalid-range %t
+// RUN: %check_clang_tidy %s obvious-invalid-range %t
 
 namespace std {
 
@@ -30,7 +30,7 @@ public:
 void test_copy() {
   std::vector<int> v, v2;
   std::copy(v.begin(), v2.end(), v2.begin());
-  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: call to algorithm with begin and end from different objects [misc-invalid-range]
+  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: call to algorithm with begin and end from different objects [obvious-invalid-range]
 
   std::copy(v.begin(), v.end(), v2.begin());
 }
@@ -39,7 +39,7 @@ void test_move() {
   std::vector<int> v;
   auto &v2 = v;
   std::move(v.begin(), v2.end(), v2.begin());
-  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: call to algorithm with begin and end from different objects [misc-invalid-range]
+  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: call to algorithm with begin and end from different objects
 
   std::move(v.begin(), v.end(), v2.begin());
   std::move(v.begin());
