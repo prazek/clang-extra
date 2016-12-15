@@ -66,7 +66,6 @@ Clang-Tidy Checks
    misc-inaccurate-erase
    misc-incorrect-roundings
    misc-inefficient-algorithm
-   misc-invalid-range
    misc-macro-parentheses
    misc-macro-repeated-side-effects
    misc-misplaced-const
@@ -120,6 +119,7 @@ Clang-Tidy Checks
    modernize-use-using
    mpi-buffer-deref
    mpi-type-mismatch
+   obvious-invalid-range
    performance-faster-string-find
    performance-for-range-copy
    performance-implicit-cast-in-loop

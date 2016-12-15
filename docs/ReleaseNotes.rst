@@ -123,7 +123,7 @@ Improvements to clang-tidy
   in working code, but can be found while looking for an obvious bug in broken
   code.
 - New `obvious-invalid-range
-  <http://clang.llvm.org/extra/clang-tidy/checks/misc-invalid-range.html>`_ check
+  <http://clang.llvm.org/extra/clang-tidy/checks/obvious-invalid-range.html>`_ check
 
   Warns if algorithm is used with ``.begin()`` and ``.end()`` from different
   variables.

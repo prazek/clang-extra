@@ -21,7 +21,7 @@ namespace obvious {
 /// Find invalid call to algorithm with obviously invalid range of iterators.
 ///
 /// For the user-facing documentation see:
-/// http://clang.llvm.org/extra/clang-tidy/checks/misc-invalid-range.html
+/// http://clang.llvm.org/extra/clang-tidy/checks/obvious-invalid-range.html
 class InvalidRangeCheck : public ClangTidyCheck {
 public:
   InvalidRangeCheck(StringRef Name, ClangTidyContext *Context);
