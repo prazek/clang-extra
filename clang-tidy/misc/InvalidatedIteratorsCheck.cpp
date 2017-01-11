@@ -12,6 +12,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Analysis/CFG.h"
+#include <iostream>
 
 using namespace clang::ast_matchers;
 using namespace clang::tidy::utils;
@@ -28,8 +29,10 @@ void InvalidatedIteratorsCheck::registerMatchers(MatchFinder *Finder) {
               varDecl(allOf(hasAncestor(functionDecl().bind("BlockFunc")),
                             hasParent(declStmt().bind("DeclarationStmt")),
                             hasType(referenceType()),
-                            hasDescendant(declRefExpr(hasType(
-                                cxxRecordDecl(hasName("std::vector")))))))
+                            hasDescendant(declRefExpr(
+                                hasType(cxxRecordDecl(hasName("std::vector"))),
+                                hasDeclaration(varDecl().bind("TheVector"))
+                            ))))
                   .bind("Declaration")))
           .bind("Expr"),
       this);
@@ -40,6 +43,7 @@ void InvalidatedIteratorsCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *RefDecl = Result.Nodes.getNodeAs<VarDecl>("Declaration");
   const auto *RefDeclStmt = Result.Nodes.getNodeAs<DeclStmt>("DeclarationStmt");
   const auto *Func = Result.Nodes.getNodeAs<FunctionDecl>("BlockFunc");
+  const auto *VectorDecl = Result.Nodes.getNodeAs<VarDecl>("TheVector");
   Stmt *FuncBody = Func->getBody();
   // FuncBody->dumpColor();
 
@@ -65,7 +69,7 @@ void InvalidatedIteratorsCheck::check(const MatchFinder::MatchResult &Result) {
   auto PushBackMatcher =
       cxxMemberCallExpr(
           has(memberExpr(hasDeclaration(cxxMethodDecl(hasName("push_back"))),
-                         has(declRefExpr()))))
+                         has(declRefExpr(hasDeclaration(varDecl(equalsNode(VectorDecl))))))))
           .bind("PushBackCall");
 
   for (const auto &BlockElem : *Block) {
