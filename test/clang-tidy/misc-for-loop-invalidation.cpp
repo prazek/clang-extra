@@ -16,11 +16,31 @@ public:
   Value& operator[](const Key&) { return *new Key(); }
 
   void erase(const Key&) { }
+
   void insert(const Key&, const Value&) { }
 
-  iterator find(const Key&) { return nullptr; }
+  iterator find(const Key&) const { return nullptr; }
+
   iterator begin() { return nullptr; }
+  iterator begin() const { return nullptr; }
   iterator end() { return nullptr; }
+  iterator end() const { return nullptr; }
+};
+
+template <typename Value>
+class vector {
+public:
+  using iterator = Value*;
+
+  Value& operator[](int) { return *new Value(); }
+  const Value& operator[](int) const { return *new Value(); }
+
+  void erase(iterator) { }
+
+  iterator begin() { return nullptr; }
+  iterator begin() const { return nullptr; }
+  iterator end() { return nullptr; }
+  iterator end() const { return nullptr; }
 };
 
 } // namespace std
@@ -42,6 +62,9 @@ void foo() {
     // CHECK-MESSAGES: :[[@LINE-1]]:5: warning:
 
     unordered_map.find(123);
+
+    unordered_map.begin();
+    unordered_map.end();
   }
 
   unordered_map.erase(10);
@@ -54,5 +77,15 @@ void foo() {
 
     unordered_map2.erase(10);
     // CHECK-MESSAGES: :[[@LINE-1]]:5: warning:
+  }
+
+  std::vector<char> vector;
+  for (auto& e: vector) {
+    vector[0] = char(e);
+
+    vector.begin();
+
+    vector.erase(nullptr);
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
   }
 }
