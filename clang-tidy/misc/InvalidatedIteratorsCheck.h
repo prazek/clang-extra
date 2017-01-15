@@ -17,16 +17,6 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// Visitor which tracks all modifications of containers that might
-/// invalidate many references/iterators/pointers.
-class ContainerTrackingVisitor
-    : public clang::RecursiveASTVisitor<ContainerTrackingVisitor> {
-public:
-  ContainerTrackingVisitor(const Expr *RefExpr, const Expr *ContainerExpr) {
-    // TODO write constructor
-  }
-};
-
 /// FIXME: Write a short description.
 ///
 /// For the user-facing documentation see:
@@ -37,6 +27,18 @@ public:
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+
+private:
+  using ExprMatcherType = ast_matchers::internal::BindableMatcher<Stmt>;
+
+  ExprMatcherType getModifyingMatcher(const VarDecl *VectorDecl);
+  bool canFuncInvalidate(const FunctionDecl *Func, unsigned ArgId,
+                         ASTContext *Context);
+  bool canCallInvalidate(const CallExpr *Call, ast_matchers::BoundNodes Match,
+                         ASTContext *Context);
+
+  std::map<std::pair<const FunctionDecl *, unsigned>, bool>
+      CanFuncInvalidateMemo;
 };
 
 } // namespace misc

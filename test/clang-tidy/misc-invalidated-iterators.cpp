@@ -19,6 +19,7 @@ public:
   vector() {}
 
   void push_back(Type &&elem) {}
+  void pop_back() {}
 
   Type &operator[](int position) { return tmp; }
 
@@ -57,4 +58,47 @@ void incorrect_sample() {
   // FIXME: Add a warning here.
   (*ElemPtr)++;
   // FIXME: Add a warning here.
+}
+
+
+void modifyVector(std::vector<int> &Vec) {
+  Vec.push_back(555);
+}
+
+void callModifyVector(std::vector<int> &Vec) {
+  modifyVector(Vec);
+}
+
+void checkVector(const std::vector<int> &){}
+void anotherCheckVector(std::vector<int>) {}
+
+
+void test_calling() {
+  std::vector<int> VecBad,VecGood;
+  VecBad.push_back(5);
+  VecGood.push_back(18);
+  VecGood.push_back(1818);
+  int &BadRef = VecBad[0];
+  int &GoodRef = VecGood[0];
+
+  modifyVector(VecBad);
+  checkVector(VecGood);
+  anotherCheckVector(VecGood);
+  VecGood.pop_back();
+
+  BadRef++;
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'BadRef' might be invalidated before the access
+  // CHECK-MESSAGES: :[[@LINE-7]]:3: note: possible place of invalidation
+  GoodRef++;
+}
+
+void test_recursive_calling() {
+  std::vector<int> RecVecBad;
+  RecVecBad.push_back(99);
+  int &BadRef = RecVecBad[0];
+
+  callModifyVector(RecVecBad);
+  BadRef++;
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'BadRef' might be invalidated before the access
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: note: possible place of invalidation
 }
