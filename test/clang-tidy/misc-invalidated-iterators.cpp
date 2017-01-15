@@ -51,7 +51,7 @@ void incorrect_sample() {
   int *ElemPtr = &VecBad[0];
 
   VecBad.push_back(42);
-  ElemRef++;
+  ElemRef = 42;
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'ElemRef' might be invalidated before the access
   // CHECK-MESSAGES: :[[@LINE-3]]:10: note: possible place of invalidation
   (*ElemIter)++;
@@ -101,4 +101,14 @@ void test_recursive_calling() {
   BadRef++;
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'BadRef' might be invalidated before the access
   // CHECK-MESSAGES: :[[@LINE-3]]:3: note: possible place of invalidation
+}
+
+void test_argument(std::vector<int> &a, std::vector<int> &b) {
+  int &ElemRef = a[0];
+  int &ElemRefGood = b[0];
+  a.push_back(42);
+  ElemRefGood += 42;
+  ElemRef += 42;
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'ElemRef' might be invalidated before the access
+  // CHECK-MESSAGES: :[[@LINE-4]]:5: note: possible place of invalidation
 }
