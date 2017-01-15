@@ -29,6 +29,9 @@ const char ExprName[] = "Expr";
 }
 
 void InvalidatedIteratorsCheck::registerMatchers(MatchFinder *Finder) {
+  if (!getLangOpts().CPlusPlus)
+    return;
+
   Finder->addMatcher(
       declRefExpr(
           hasDeclaration(
