@@ -74,7 +74,7 @@ void anotherCheckVector(std::vector<int>) {}
 
 
 void test_calling() {
-  std::vector<int> VecBad,VecGood;
+  std::vector<int> VecBad, VecGood;
   VecBad.push_back(5);
   VecGood.push_back(18);
   VecGood.push_back(1818);
@@ -93,13 +93,24 @@ void test_calling() {
 }
 
 void test_recursive_calling() {
-  std::vector<int> RecVecBad;
+  std::vector<int> RecVecBad, LambdaVecBad;
   RecVecBad.push_back(99);
+  LambdaVecBad.push_back(0);
   int &BadRef = RecVecBad[0];
+  int &BadLambdaRef = LambdaVecBad[0];
+
+  auto lambda = [](std::vector<int> &Vec) {
+    callModifyVector(Vec);
+  };
 
   callModifyVector(RecVecBad);
   BadRef++;
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'BadRef' might be invalidated before the access
+  // CHECK-MESSAGES: :[[@LINE-3]]:3: note: possible place of invalidation
+
+  lambda(LambdaVecBad);
+  BadLambdaRef++;
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'BadLambdaRef' might be invalidated before the access
   // CHECK-MESSAGES: :[[@LINE-3]]:3: note: possible place of invalidation
 }
 

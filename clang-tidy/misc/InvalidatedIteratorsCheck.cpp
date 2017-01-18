@@ -12,6 +12,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Analysis/CFG.h"
+#include <iostream>
 
 using namespace clang::ast_matchers;
 using namespace clang::tidy::utils;
@@ -48,16 +49,17 @@ void InvalidatedIteratorsCheck::registerMatchers(MatchFinder *Finder) {
 
 bool InvalidatedIteratorsCheck::canFuncInvalidate(const FunctionDecl *Func,
                                                   unsigned ArgId,
+                                                  unsigned NumCallArgs,
                                                   ASTContext *Context) {
-  const auto MemoPair = std::make_pair(Func, ArgId);
-  const auto MemoChkIter = CanFuncInvalidateMemo.find(MemoPair);
+  const auto MemoTuple = std::make_tuple(Func, ArgId, NumCallArgs);
+  const auto MemoChkIter = CanFuncInvalidateMemo.find(MemoTuple);
   if (MemoChkIter != CanFuncInvalidateMemo.end())
     return MemoChkIter->second;
 
   // Temporarily insert a negative answer so that recursive functions
   // won't loop our method.
   const auto InsertResult =
-      CanFuncInvalidateMemo.insert(std::make_pair(MemoPair, false));
+      CanFuncInvalidateMemo.insert(std::make_pair(MemoTuple, false));
   assert(InsertResult.second);
   const auto MemoIter = InsertResult.first;
 
@@ -67,6 +69,25 @@ bool InvalidatedIteratorsCheck::canFuncInvalidate(const FunctionDecl *Func,
     return (MemoIter->second = true);
   }
 
+  Func->dumpColor();
+  if (Func->getNumParams() != NumCallArgs) {
+    // Sometimes number of call arguments is not equal to the number
+    // of declaration arguments. As far as we know, it happens only when
+    // calling some class operators. In this case, there is also an
+    // additional *this argument as the first argument of the call.
+    // We should get rid of it so as to match the declaration arguments.
+    assert(Func->getNumParams() == NumCallArgs - 1 &&
+           "Number of function parameters should be equal to number of call "
+           "arguments or call arguments minus one");
+
+    if (ArgId == 0) {
+      // We don't care about member calls. These should be covered in other
+      // matchers.
+      return false;
+    }
+    ArgId--;
+  }
+  // std::cerr << "Total arguments: " << Func->getNumParams() << std::endl;
   const auto *Arg = Func->parameters()[ArgId];
 
   auto ModifyingMatcher = functionDecl(hasDescendant(getModifyingMatcher(Arg)));
@@ -94,10 +115,15 @@ bool InvalidatedIteratorsCheck::canCallInvalidate(
 
   for (unsigned i = 0; i < Call->getNumArgs(); ++i) {
     const auto *Arg = Call->getArg(i);
-
-    if (Arg == FuncArg && canFuncInvalidate(FuncDecl, i, Context)) {
-      return true;
+    if (Arg == FuncArg) {
+      Call->dumpColor();
+      Arg->dumpColor();
+      std::cerr << "Arg: " << i << " / " << Call->getNumArgs() << std::endl;
     }
+
+    if (Arg == FuncArg &&
+        canFuncInvalidate(FuncDecl, i, Call->getNumArgs(), Context))
+      return true;
   }
 
   return false;
@@ -105,11 +131,12 @@ bool InvalidatedIteratorsCheck::canCallInvalidate(
 
 InvalidatedIteratorsCheck::ExprMatcherType
 InvalidatedIteratorsCheck::getModifyingMatcher(const VarDecl *VectorDecl) {
-  auto PushBackMatcher =
-      cxxMemberCallExpr(
-          has(memberExpr(hasDeclaration(cxxMethodDecl(hasName("push_back"))),
-                         has(declRefExpr(hasDeclaration(
-                             varDecl(equalsNode(VectorDecl))))))))
+  auto InvalidateMatcher =
+      cxxMemberCallExpr(has(memberExpr(hasDeclaration(cxxMethodDecl(hasAnyName(
+                                           "push_back", "emplace_back", "clear",
+                                           "insert", "emplace"))),
+                                       has(declRefExpr(hasDeclaration(
+                                           varDecl(equalsNode(VectorDecl))))))))
           .bind("PushBackCall");
   auto FuncCallMatcher =
       callExpr(hasDeclaration(functionDecl().bind("FuncDecl")),
@@ -117,7 +144,7 @@ InvalidatedIteratorsCheck::getModifyingMatcher(const VarDecl *VectorDecl) {
                    declRefExpr(hasDeclaration(varDecl(equalsNode(VectorDecl))))
                        .bind("FuncArg")))
           .bind("CallExpr");
-  auto ModifyingMatcher = expr(eachOf(PushBackMatcher, FuncCallMatcher));
+  auto ModifyingMatcher = expr(eachOf(InvalidateMatcher, FuncCallMatcher));
 
   return ModifyingMatcher;
 }
@@ -135,7 +162,6 @@ void InvalidatedIteratorsCheck::check(const MatchFinder::MatchResult &Result) {
   Options.AddTemporaryDtors = true;
 
   auto *Context = Result.Context;
-  // TODO: go through all Options
 
   const std::unique_ptr<CFG> TheCFG =
       CFG::buildCFG(nullptr, FuncBody, Result.Context, Options);

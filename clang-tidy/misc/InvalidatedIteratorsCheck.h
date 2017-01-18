@@ -33,11 +33,11 @@ private:
 
   ExprMatcherType getModifyingMatcher(const VarDecl *VectorDecl);
   bool canFuncInvalidate(const FunctionDecl *Func, unsigned ArgId,
-                         ASTContext *Context);
+                         unsigned NumCallArgs, ASTContext *Context);
   bool canCallInvalidate(const CallExpr *Call, ast_matchers::BoundNodes Match,
                          ASTContext *Context);
 
-  std::map<std::pair<const FunctionDecl *, unsigned>, bool>
+  std::map<std::tuple<const FunctionDecl *, unsigned, unsigned>, bool>
       CanFuncInvalidateMemo;
 };
 
