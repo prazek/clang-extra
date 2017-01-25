@@ -12,8 +12,6 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "../utils/OptionsUtils.h"
 
-#include <iostream>
-
 using namespace clang::ast_matchers;
 
 namespace clang {

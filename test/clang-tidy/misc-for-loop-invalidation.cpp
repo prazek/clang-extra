@@ -3,9 +3,7 @@
 namespace std {
 
 template <typename First, typename Second>
-class pair {
-
-};
+class pair { };
 
 template <typename Key, typename Value>
 class unordered_map {
@@ -16,7 +14,6 @@ public:
   Value& operator[](const Key&) { return *new Key(); }
 
   void erase(const Key&) { }
-
   void insert(const Key&, const Value&) { }
 
   iterator find(const Key&) const { return nullptr; }
