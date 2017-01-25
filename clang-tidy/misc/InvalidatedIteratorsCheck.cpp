@@ -58,8 +58,8 @@ InvalidatedIteratorsCheck::getModifyingMatcher(const VarDecl *VectorDecl) {
   // An invalidation might occur by directly calling a risky method.
   auto InvalidateMatcher =
       cxxMemberCallExpr(has(memberExpr(hasDeclaration(cxxMethodDecl(hasAnyName(
-          "push_back", "emplace_back", "clear",
-          "insert", "emplace"))),
+                                           "push_back", "emplace_back", "clear",
+                                           "insert", "emplace"))),
                                        has(declRefExpr(hasDeclaration(
                                            varDecl(equalsNode(VectorDecl))))))))
           .bind(CallName);
@@ -203,8 +203,9 @@ void InvalidatedIteratorsCheck::check(const MatchFinder::MatchResult &Result) {
       if (CallUse && !canCallInvalidate(CallUse, Match, Context))
         continue;
 
-      const Expr *Use = (InvalidatingUse != nullptr ? cast<Expr>(InvalidatingUse)
-                                                    : cast<Expr>(CallUse));
+      const Expr *Use =
+          (InvalidatingUse != nullptr ? cast<Expr>(InvalidatingUse)
+                                      : cast<Expr>(CallUse));
 
       // The incorrect order of operations is:
       //   1. Declare a reference.
