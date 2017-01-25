@@ -17,7 +17,8 @@ namespace clang {
 namespace tidy {
 namespace misc {
 
-/// FIXME: Write a short description.
+/// This check warns about the possible use of the invalidated container
+/// iterators, pointers and/or references.
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/misc-invalidated-iterators.html
@@ -31,12 +32,23 @@ public:
 private:
   using ExprMatcherType = ast_matchers::internal::BindableMatcher<Stmt>;
 
+  // Returns the clang-tidy matcher binding to the possibly invalidating uses
+  // of the container (either invoking a dangerous member call or calling
+  // another function with a non-const reference.)
   ExprMatcherType getModifyingMatcher(const VarDecl *VectorDecl);
+
+  // Checks if given Func can invalidate the container at its given argument
+  // (ArgId). For convienience, number of Func's arguemnts is also passed.
   bool canFuncInvalidate(const FunctionDecl *Func, unsigned ArgId,
                          unsigned NumCallArgs, ASTContext *Context);
+
+  // Checks if given Call can invalidate the container provided by Match.
   bool canCallInvalidate(const CallExpr *Call, ast_matchers::BoundNodes Match,
                          ASTContext *Context);
 
+  // A cache which remembers the results of canFuncInvalidate calls. It
+  // is necessary in order to prevent canFuncInvalidate from looping or
+  // having exponential time behavior.
   std::map<std::tuple<const FunctionDecl *, unsigned, unsigned>, bool>
       CanFuncInvalidateMemo;
 };

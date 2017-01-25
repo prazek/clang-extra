@@ -27,6 +27,12 @@ const char BlockFuncName[] = "BlockFunc";
 const char DeclStmtName[] = "DeclarationStmt";
 const char DeclName[] = "Declaration";
 const char ExprName[] = "Expr";
+const char VectorName[] = "TheVector";
+
+const char CallExprName[] = "CallExpr";
+const char CallName[] = "InvalidatingCall";
+const char CalledDeclName[] = "FuncDecl";
+const char CallArgName[] = "CallArg";
 }
 
 void InvalidatedIteratorsCheck::registerMatchers(MatchFinder *Finder) {
@@ -41,16 +47,40 @@ void InvalidatedIteratorsCheck::registerMatchers(MatchFinder *Finder) {
                             hasType(referenceType()),
                             hasDescendant(declRefExpr(
                                 hasType(cxxRecordDecl(hasName("std::vector"))),
-                                hasDeclaration(varDecl().bind("TheVector"))))))
+                                hasDeclaration(varDecl().bind(VectorName))))))
                   .bind(DeclName)))
           .bind(ExprName),
       this);
+}
+
+InvalidatedIteratorsCheck::ExprMatcherType
+InvalidatedIteratorsCheck::getModifyingMatcher(const VarDecl *VectorDecl) {
+  // An invalidation might occur by directly calling a risky method.
+  auto InvalidateMatcher =
+      cxxMemberCallExpr(has(memberExpr(hasDeclaration(cxxMethodDecl(hasAnyName(
+          "push_back", "emplace_back", "clear",
+          "insert", "emplace"))),
+                                       has(declRefExpr(hasDeclaration(
+                                           varDecl(equalsNode(VectorDecl))))))))
+          .bind(CallName);
+  // It may also occur by calling a method through a non-const reference.
+  auto FuncCallMatcher =
+      callExpr(hasDeclaration(functionDecl().bind(CalledDeclName)),
+               hasAnyArgument(
+                   declRefExpr(hasDeclaration(varDecl(equalsNode(VectorDecl))))
+                       .bind(CallArgName)))
+          .bind(CallExprName);
+  auto ModifyingMatcher = expr(eachOf(InvalidateMatcher, FuncCallMatcher));
+
+  return ModifyingMatcher;
 }
 
 bool InvalidatedIteratorsCheck::canFuncInvalidate(const FunctionDecl *Func,
                                                   unsigned ArgId,
                                                   unsigned NumCallArgs,
                                                   ASTContext *Context) {
+  // Try to find the result of some previous canFuncInvalidate call
+  // which matches our arguments.
   const auto MemoTuple = std::make_tuple(Func, ArgId, NumCallArgs);
   const auto MemoChkIter = CanFuncInvalidateMemo.find(MemoTuple);
   if (MemoChkIter != CanFuncInvalidateMemo.end())
@@ -64,12 +94,11 @@ bool InvalidatedIteratorsCheck::canFuncInvalidate(const FunctionDecl *Func,
   const auto MemoIter = InsertResult.first;
 
   if (!Func->hasBody()) {
-    // We cannot assume anything about the function; it possibly invalidates
-    // iterators.
+    // We cannot assume anything about the function, not knowing its
+    // body; it possibly invalidates our iterators.
     return (MemoIter->second = true);
   }
 
-  Func->dumpColor();
   if (Func->getNumParams() != NumCallArgs) {
     // Sometimes number of call arguments is not equal to the number
     // of declaration arguments. As far as we know, it happens only when
@@ -87,19 +116,22 @@ bool InvalidatedIteratorsCheck::canFuncInvalidate(const FunctionDecl *Func,
     }
     ArgId--;
   }
-  // std::cerr << "Total arguments: " << Func->getNumParams() << std::endl;
+
   const auto *Arg = Func->parameters()[ArgId];
 
+  // Get all possible invalidations of the container Arg.
   auto ModifyingMatcher = functionDecl(hasDescendant(getModifyingMatcher(Arg)));
 
   const auto Matches = match(ModifyingMatcher, *Func, *Context);
   for (const auto &Match : Matches) {
-    const bool IsPushBack =
-        Match.getNodeAs<CXXMemberCallExpr>("PushBackCall") != nullptr;
-    if (IsPushBack)
+    // A dangerous method possibly invalidates iterators.
+    const bool IsInvalidatingCall =
+        Match.getNodeAs<CXXMemberCallExpr>(CallName) != nullptr;
+    if (IsInvalidatingCall)
       return (MemoIter->second = true);
 
-    const auto *CallUse = Match.getNodeAs<CallExpr>("CallExpr");
+    // A recursive call might invalidate.
+    const auto *CallUse = Match.getNodeAs<CallExpr>(CallExprName);
     assert(CallUse);
 
     if (canCallInvalidate(CallUse, Match, Context))
@@ -110,16 +142,13 @@ bool InvalidatedIteratorsCheck::canFuncInvalidate(const FunctionDecl *Func,
 
 bool InvalidatedIteratorsCheck::canCallInvalidate(
     const CallExpr *Call, ast_matchers::BoundNodes Match, ASTContext *Context) {
-  const auto *FuncArg = Match.getNodeAs<Expr>("FuncArg");
-  const auto *FuncDecl = Match.getNodeAs<FunctionDecl>("FuncDecl");
+  const auto *FuncArg = Match.getNodeAs<Expr>(CallArgName);
+  const auto *FuncDecl = Match.getNodeAs<FunctionDecl>(CalledDeclName);
 
+  // Go through all call arguments and check if any of them matches to
+  // our argument and can invalidate iterators pointing to it.
   for (unsigned i = 0; i < Call->getNumArgs(); ++i) {
     const auto *Arg = Call->getArg(i);
-    if (Arg == FuncArg) {
-      Call->dumpColor();
-      Arg->dumpColor();
-      std::cerr << "Arg: " << i << " / " << Call->getNumArgs() << std::endl;
-    }
 
     if (Arg == FuncArg &&
         canFuncInvalidate(FuncDecl, i, Call->getNumArgs(), Context))
@@ -129,40 +158,20 @@ bool InvalidatedIteratorsCheck::canCallInvalidate(
   return false;
 }
 
-InvalidatedIteratorsCheck::ExprMatcherType
-InvalidatedIteratorsCheck::getModifyingMatcher(const VarDecl *VectorDecl) {
-  auto InvalidateMatcher =
-      cxxMemberCallExpr(has(memberExpr(hasDeclaration(cxxMethodDecl(hasAnyName(
-                                           "push_back", "emplace_back", "clear",
-                                           "insert", "emplace"))),
-                                       has(declRefExpr(hasDeclaration(
-                                           varDecl(equalsNode(VectorDecl))))))))
-          .bind("PushBackCall");
-  auto FuncCallMatcher =
-      callExpr(hasDeclaration(functionDecl().bind("FuncDecl")),
-               hasAnyArgument(
-                   declRefExpr(hasDeclaration(varDecl(equalsNode(VectorDecl))))
-                       .bind("FuncArg")))
-          .bind("CallExpr");
-  auto ModifyingMatcher = expr(eachOf(InvalidateMatcher, FuncCallMatcher));
-
-  return ModifyingMatcher;
-}
-
 void InvalidatedIteratorsCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *RefUse = Result.Nodes.getNodeAs<DeclRefExpr>(ExprName);
   const auto *RefDecl = Result.Nodes.getNodeAs<VarDecl>(DeclName);
   const auto *RefDeclStmt = Result.Nodes.getNodeAs<DeclStmt>(DeclStmtName);
   const auto *Func = Result.Nodes.getNodeAs<FunctionDecl>(BlockFuncName);
-  const auto *VectorDecl = Result.Nodes.getNodeAs<VarDecl>("TheVector");
+  const auto *VectorDecl = Result.Nodes.getNodeAs<VarDecl>(VectorName);
   Stmt *FuncBody = Func->getBody();
 
   CFG::BuildOptions Options;
-  Options.AddImplicitDtors = true;
-  Options.AddTemporaryDtors = true;
 
   auto *Context = Result.Context;
 
+  // Construct a CFG and ExprSequence so that it is possible to find possible
+  // sequences of operations.
   const std::unique_ptr<CFG> TheCFG =
       CFG::buildCFG(nullptr, FuncBody, Result.Context, Options);
   const std::unique_ptr<StmtToBlockMap> BlockMap(
@@ -177,22 +186,30 @@ void InvalidatedIteratorsCheck::check(const MatchFinder::MatchResult &Result) {
   auto ModifyingMatcher = getModifyingMatcher(VectorDecl);
 
   for (const auto &BlockElem : *Block) {
+    // In each block, find all possible invalidating operations and process
+    // all of them.
     const auto StmtPtr = BlockElem.getAs<CFGStmt>();
     if (!StmtPtr.hasValue())
       continue;
     auto Results = match(ModifyingMatcher, *(StmtPtr->getStmt()), *Context);
 
     for (const auto &Match : Results) {
-      const auto *PushBackUse =
-          Match.getNodeAs<CXXMemberCallExpr>("PushBackCall");
-      const auto *CallUse = Match.getNodeAs<CallExpr>("CallExpr");
+      const auto *InvalidatingUse =
+          Match.getNodeAs<CXXMemberCallExpr>(CallName);
+      const auto *CallUse = Match.getNodeAs<CallExpr>(CallExprName);
 
+      // If the candidate invalidating operation is calling the function,
+      // it should be able to invalidate.
       if (CallUse && !canCallInvalidate(CallUse, Match, Context))
         continue;
 
-      const Expr *Use = (PushBackUse != nullptr ? cast<Expr>(PushBackUse)
-                                                : cast<Expr>(CallUse));
+      const Expr *Use = (InvalidatingUse != nullptr ? cast<Expr>(InvalidatingUse)
+                                                    : cast<Expr>(CallUse));
 
+      // The incorrect order of operations is:
+      //   1. Declare a reference.
+      //   2. Make a possibly invalidating use of the container.
+      //   3. Use the reference.
       if (Sequence->potentiallyAfter(Use, RefDeclStmt) &&
           Sequence->potentiallyAfter(RefUse, Use)) {
         diag(RefUse->getLocation(), "%0 might be invalidated before the access")
