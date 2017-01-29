@@ -17,6 +17,10 @@ namespace clang {
 namespace tidy {
 namespace modernize {
 
+UseUsingCheck::UseUsingCheck(StringRef Name, ClangTidyContext *Context)
+    : ClangTidyCheck(Name, Context),
+      MacroWarning(Options.get("MacroWarning", false)) {}
+
 void UseUsingCheck::registerMatchers(MatchFinder *Finder) {
   if (!getLangOpts().CPlusPlus11)
     return;
@@ -80,22 +84,32 @@ void UseUsingCheck::check(const MatchFinder::MatchResult &Result) {
   auto &SM = *Result.SourceManager;
 
   if (auto *D = MatchedDecl->getUnderlyingType()->getAsCXXRecordDecl()) {
-    //TypeLoc TL = MatchedDecl->getTypeSourceInfo()->getTypeLoc();
+    // TypeLoc TL = MatchedDecl->getTypeSourceInfo()->getTypeLoc();
     llvm::errs() << D->getNameAsString() << "\n";
   }
+
+  SourceLocation StartLoc = MatchedDecl->getLocStart();
+
+  if (StartLoc.isMacroID() && !MacroWarning)
+    return;
 
   auto Diag =
       diag(MatchedDecl->getLocStart(), "use 'using' instead of 'typedef'");
 
-  SourceLocation StartLoc = MatchedDecl->getLocStart();
-  if (StartLoc.isMacroID())
+  //do not fix if there is macro or array 
+  if (MatchedDecl->getUnderlyingType()->isArrayType() || StartLoc.isMacroID())
     return;
 
   if (CheckRemoval(SM, StartLoc, Context)) {
+    auto printPolicy = PrintingPolicy(getLangOpts());
+    printPolicy.SuppressScope = true;
+    printPolicy.ConstantArraySizeAsWritten = true;
+    printPolicy.UseVoidForZeroParams = false;
+
     Diag << FixItHint::CreateReplacement(
         MatchedDecl->getSourceRange(),
         "using " + MatchedDecl->getNameAsString() + " = " +
-            MatchedDecl->getUnderlyingType().getAsString(getLangOpts()));
+            MatchedDecl->getUnderlyingType().getAsString(printPolicy));
   }
 }
 
