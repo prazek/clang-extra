@@ -40,6 +40,19 @@ public:
   iterator end() const { return nullptr; }
 };
 
+template <typename Value>
+class list {
+public:
+  using iterator = Value*;
+
+  void push_front(Value) { }
+
+  iterator begin() { return nullptr; }
+  iterator begin() const { return nullptr; }
+  iterator end() { return nullptr; }
+  iterator end() const { return nullptr; }
+};
+
 } // namespace std
 
 void foo() {
@@ -84,5 +97,10 @@ void foo() {
 
     vector.erase(nullptr);
     // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
+  }
+
+  std::list<int> list;
+  for (auto& e: list) {
+    list.push_front(0);
   }
 }

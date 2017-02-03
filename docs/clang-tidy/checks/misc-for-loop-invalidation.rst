@@ -3,4 +3,14 @@
 misc-for-loop-invalidation
 ==========================
 
-FIXME: Describe what patterns does the check detect and why. Give examples.
+Find and flag suspicious method calls on objects iterated using
+C++11 for-range loop. If such call can invalidate iterators then
+behaviour is undefined.
+
+.. code-block:: c++
+
+  std::vector<int> v = {1, 2, 3};
+  for (auto i : v) {
+    v.push_back(0); // Boom!
+  }
+
