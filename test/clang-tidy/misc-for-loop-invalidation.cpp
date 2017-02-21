@@ -55,6 +55,11 @@ public:
 
 } // namespace std
 
+[[ noreturn ]] void NoReturn() {
+  throw 42;
+}
+
+
 void foo() {
   std::unordered_map<int, int> unordered_map;
 
@@ -97,6 +102,21 @@ void foo() {
 
     vector.erase(nullptr);
     // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
+
+
+    if (vector[0] == 'a') {
+      vector.erase(nullptr); // OK
+      break;
+    }
+    else if (vector[0] == 'b') {
+      vector.erase(nullptr); // also OK
+      return;
+    }
+
+    if (vector[1] == 'g') {
+      vector.erase(nullptr); // also OK
+      NoReturn();
+    }
   }
 
   std::list<int> list;

@@ -8,11 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "ForLoopInvalidationCheck.h"
+#include "../utils/ExprSequence.h"
 #include "../utils/OptionsUtils.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/Analysis/CFG.h"
+#include "clang/Analysis/Analyses/ReachableCode.h"
 
 using namespace clang::ast_matchers;
+using namespace clang::tidy::utils;
+using namespace clang::ast_type_traits;
 
 namespace clang {
 namespace tidy {
@@ -23,6 +28,8 @@ namespace {
 const char CalledObject[] = "calledObject";
 const char MethodDeclaration[] = "methodDeclaration";
 const char MethodCall[] = "methodCall";
+const char ForStatement[] = "forRange";
+const char FunctionDeclaration[] = "functionDecl";
 const char DefaultAllowedTypes[] =
     "::std::list; ::std::forward_list";
 
@@ -76,7 +83,9 @@ void ForLoopInvalidationCheck::registerMatchers(MatchFinder *Finder) {
                      cxxOperatorCallExpr(hasArgument(0, CalledObjectRef))),
                callee(MethodMatcher),
                hasAncestor(cxxForRangeStmt(hasRangeInit(
-                   declRefExpr(to(varDecl(equalsBoundNode(CalledObject))))))))
+                   declRefExpr(to(varDecl(equalsBoundNode(CalledObject))))))
+               .bind(ForStatement)),
+               hasAncestor(functionDecl().bind(FunctionDeclaration)))
           .bind(MethodCall),
       this);
 }
@@ -84,14 +93,34 @@ void ForLoopInvalidationCheck::registerMatchers(MatchFinder *Finder) {
 void ForLoopInvalidationCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *MethodDecl =
       Result.Nodes.getNodeAs<CXXMethodDecl>(MethodDeclaration);
+  const auto *MatchedExpression = Result.Nodes.getNodeAs<CallExpr>(MethodCall);
+  const auto *MatchedForStatement = Result.Nodes.getNodeAs<CXXForRangeStmt>(ForStatement);
+  const auto *MatchedFunction = Result.Nodes.getNodeAs<FunctionDecl>(FunctionDeclaration);
 
   if (HaveEquivalentConstMethod(MethodDecl))
     return;
 
-  const auto *MatchedExpression = Result.Nodes.getNodeAs<CallExpr>(MethodCall);
+  CFG::BuildOptions Options;
 
-  diag(MatchedExpression->getLocStart(),
-       "this call may lead to iterator invalidation");
+  Stmt* ForStmt = const_cast<CXXForRangeStmt*>(MatchedForStatement);
+
+  // Construct a CFG and ExprSequence so that it is possible to find possible
+  // sequences of operations.
+  const std::unique_ptr<CFG> TheCFG =
+      CFG::buildCFG(nullptr, ForStmt, Result.Context, Options);
+  const std::unique_ptr<StmtToBlockMap> BlockMap(
+      new StmtToBlockMap(TheCFG.get(), Result.Context));
+
+  auto *CallCFGBlock = BlockMap->blockContainingStmt(MatchedExpression);
+  auto *IncCFGBlock = BlockMap->blockContainingStmt(MatchedForStatement->getInc());
+
+  llvm::BitVector Reachable(TheCFG->getNumBlockIDs());
+  reachable_code::ScanReachableFromBlock(CallCFGBlock, Reachable);
+
+  if (Reachable[IncCFGBlock->getBlockID()]) {
+      diag(MatchedExpression->getLocStart(),
+           "this call may lead to iterator invalidation");
+  }
 }
 
 } // namespace misc
