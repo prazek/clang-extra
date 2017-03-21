@@ -52,8 +52,6 @@ The improvements are...
 Improvements to clang-rename
 ----------------------------
 
-The improvements are...
-
 Improvements to clang-tidy
 --------------------------
 
@@ -86,6 +84,11 @@ Improvements to clang-tidy
 - New `misc-lambda-function-name <http://clang.llvm.org/extra/clang-tidy/checks/misc-lambda-function-name.html>`_ check
 
   Finds uses of ``__func__`` or ``__FUNCTION__`` inside lambdas.
+
+- New `misc-throw-with-noexcept
+  <http://clang.llvm.org/extra/clang-tidy/checks/misc-throw-with-noexcept.html>`_ check
+
+  Flags ``throw`` statements in functions marked as no-throw.
 
 - New `modernize-replace-random-shuffle
   <http://clang.llvm.org/extra/clang-tidy/checks/modernize-replace-random-shuffle.html>`_ check
