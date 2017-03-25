@@ -15,6 +15,7 @@
 #include "BadExceptionTypeCheck.h"
 #include "BoolPointerImplicitConversionCheck.h"
 #include "DanglingHandleCheck.h"
+#include "DefaultNumericsCheck.h"
 #include "DefinitionsInHeadersCheck.h"
 #include "FoldInitTypeCheck.h"
 #include "ForwardDeclarationNamespaceCheck.h"
@@ -71,6 +72,7 @@ public:
         "misc-assert-side-effect");
     CheckFactories.registerCheck<BadExceptionTypeCheck>(
         "misc-bad-exception-type");
+    CheckFactories.registerCheck<DefaultNumericsCheck>("misc-default-numerics");
     CheckFactories.registerCheck<ForwardingReferenceOverloadCheck>(
         "misc-forwarding-reference-overload");
     CheckFactories.registerCheck<LambdaFunctionNameCheck>(
