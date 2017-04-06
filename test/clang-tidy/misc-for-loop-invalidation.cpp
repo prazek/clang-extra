@@ -34,6 +34,8 @@ public:
 
   void erase(iterator) { }
 
+  void push_back(Value) { }
+
   iterator begin() { return nullptr; }
   iterator begin() const { return nullptr; }
   iterator end() { return nullptr; }
@@ -119,8 +121,28 @@ void foo() {
     }
   }
 
+  std::vector<char>& vector_reference = vector;
+  for (auto& e: vector_reference) {
+    vector_reference.push_back(e);
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
+  }
+
   std::list<int> list;
   for (auto& e: list) {
     list.push_front(0);
+  }
+}
+
+void foo2(std::vector<int> v)  {
+  for (auto x: v) {
+    v.push_back(x);
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
+  }
+}
+
+void foo3(std::vector<int>& v)  {
+  for (auto x: v) {
+    v.push_back(x);
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
   }
 }

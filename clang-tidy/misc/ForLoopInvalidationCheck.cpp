@@ -30,7 +30,7 @@ const char MethodDeclaration[] = "methodDeclaration";
 const char MethodCall[] = "methodCall";
 const char ForStatement[] = "forRange";
 const char FunctionDeclaration[] = "functionDecl";
-const char DefaultAllowedTypes[] =
+const char DefaultSafeTypes[] =
     "::std::list; ::std::forward_list";
 
 bool HaveEqualNames(const CXXMethodDecl *First, const CXXMethodDecl *Second) {
@@ -66,15 +66,17 @@ bool HaveEquivalentConstMethod(const CXXMethodDecl *Method) {
 ForLoopInvalidationCheck::ForLoopInvalidationCheck(StringRef Name,
                                                    ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
-      AllowedTypes(utils::options::parseStringList(
-          Options.get("AllowedTypes", DefaultAllowedTypes))) {}
+      SafeTypes(utils::options::parseStringList(
+          Options.get("SafeTypes", DefaultSafeTypes))) {}
 
 void ForLoopInvalidationCheck::registerMatchers(MatchFinder *Finder) {
-  auto AllowedTypesMatcher = hasAnyName(
-      SmallVector<StringRef, 5>(AllowedTypes.begin(), AllowedTypes.end()));
+  auto SafeTypesMatcher = hasDeclaration(namedDecl(unless(hasAnyName(
+      SmallVector<StringRef, 5>(SafeTypes.begin(), SafeTypes.end())))));
   auto CalledObjectRef =
-      declRefExpr(to(varDecl(hasType(qualType(hasDeclaration(
-                                 namedDecl(unless(AllowedTypesMatcher))))))
+      declRefExpr(to(varDecl(hasType(qualType(anyOf(
+          SafeTypesMatcher,
+          referenceType(pointee(SafeTypesMatcher))
+      ))))
                          .bind(CalledObject)));
   auto MethodMatcher = cxxMethodDecl(unless(isConst())).bind(MethodDeclaration);
 
