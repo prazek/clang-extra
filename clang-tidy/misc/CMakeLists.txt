@@ -3,7 +3,7 @@ set(LLVM_LINK_COMPONENTS support)
 add_clang_library(clangTidyMiscModule
   ArgumentCommentCheck.cpp
   AssertSideEffectCheck.cpp
-  ForLoopInvalidationCheck.cpp
+  ForLoopIteratorInvalidationCheck.cpp
   ForwardingReferenceOverloadCheck.cpp
   LambdaFunctionNameCheck.cpp
   MisplacedConstCheck.cpp

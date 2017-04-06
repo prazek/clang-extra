@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s misc-for-loop-invalidation %t
+// RUN: %check_clang_tidy %s misc-for-loop-iterator-invalidation %t
 
 namespace std {
 
@@ -69,7 +69,7 @@ void foo() {
 
   for (auto& z : unordered_map) {
     unordered_map[1] = 42;
-    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-iterator-invalidation]
 
     unordered_map.erase(10);
     // CHECK-MESSAGES: :[[@LINE-1]]:5: warning:
@@ -103,7 +103,7 @@ void foo() {
     vector.begin();
 
     vector.erase(nullptr);
-    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-iterator-invalidation]
 
 
     if (vector[0] == 'a') {
@@ -124,7 +124,7 @@ void foo() {
   std::vector<char>& vector_reference = vector;
   for (auto& e: vector_reference) {
     vector_reference.push_back(e);
-    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-iterator-invalidation]
   }
 
   std::list<int> list;
@@ -136,13 +136,13 @@ void foo() {
 void foo2(std::vector<int> v)  {
   for (auto x: v) {
     v.push_back(x);
-    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-iterator-invalidation]
   }
 }
 
 void foo3(std::vector<int>& v)  {
   for (auto x: v) {
     v.push_back(x);
-    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-invalidation]
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-iterator-invalidation]
   }
 }

@@ -1,6 +1,6 @@
-.. title:: clang-tidy - misc-for-loop-invalidation
+.. title:: clang-tidy - misc-for-loop-iterator-invalidation
 
-misc-for-loop-invalidation
+misc-for-loop-iterator-invalidation
 ==========================
 
 Find and flag suspicious method calls on objects iterated using

@@ -1,4 +1,4 @@
-//===--- ForLoopInvalidationCheck.h - clang-tidy-----------------*- C++ -*-===//
+//===--- ForLoopIteratorInvalidationCheck.h - clang-tidy-----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_FOR_LOOP_INVALIDATION_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_FOR_LOOP_INVALIDATION_H
+#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_FOR_LOOP_ITERATOR_INVALIDATION_H
+#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_FOR_LOOP_ITERATOR_INVALIDATION_H
 
 #include "../ClangTidy.h"
 
@@ -28,10 +28,10 @@ namespace misc {
 /// \endcode
 ///
 /// For the user-facing documentation see:
-/// http://clang.llvm.org/extra/clang-tidy/checks/misc-for-loop-invalidation.html
-class ForLoopInvalidationCheck : public ClangTidyCheck {
+/// http://clang.llvm.org/extra/clang-tidy/checks/misc-for-loop-iterator-invalidation.html
+class ForLoopIteratorInvalidationCheck : public ClangTidyCheck {
 public:
-  ForLoopInvalidationCheck(StringRef Name, ClangTidyContext *Context);
+  ForLoopIteratorInvalidationCheck(StringRef Name, ClangTidyContext *Context);
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
@@ -43,4 +43,4 @@ private:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_FOR_LOOP_INVALIDATION_H
+#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_FOR_LOOP_ITERATOR_INVALIDATION_H
