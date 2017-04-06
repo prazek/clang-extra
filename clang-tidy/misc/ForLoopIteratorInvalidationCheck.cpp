@@ -51,8 +51,9 @@ bool HaveSameParameters(const CXXMethodDecl *First,
   return true;
 };
 
-/// \brief Checks if class of gien non-const method have method with the same name and parameters but const. 
-bool HaveEquivalentConstSubstitute(const CXXMethodDecl* Method) {
+/// \brief Checks if class of gien non-const method have method with the same
+/// name and parameters but const.
+bool HaveEquivalentConstSubstitute(const CXXMethodDecl *Method) {
   const auto *Class = Method->getParent();
   for (const auto *M : Class->methods()) {
     if (M != Method && M->isConst() && HaveEqualNames(Method, M) &&
@@ -64,8 +65,8 @@ bool HaveEquivalentConstSubstitute(const CXXMethodDecl* Method) {
 
 } // namespace
 
-ForLoopIteratorInvalidationCheck::ForLoopIteratorInvalidationCheck(StringRef Name,
-                                                   ClangTidyContext *Context)
+ForLoopIteratorInvalidationCheck::ForLoopIteratorInvalidationCheck(
+    StringRef Name, ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context),
       SafeTypes(utils::options::parseStringList(
           Options.get("SafeTypes", DefaultSafeTypes))) {}
@@ -92,34 +93,50 @@ void ForLoopIteratorInvalidationCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-void ForLoopIteratorInvalidationCheck::check(const MatchFinder::MatchResult &Result) {
+void ForLoopIteratorInvalidationCheck::check(
+    const MatchFinder::MatchResult &Result) {
   const auto *MatchedExpression = Result.Nodes.getNodeAs<CallExpr>(MethodCall);
   const auto *MatchedForStatement =
       Result.Nodes.getNodeAs<CXXForRangeStmt>(ForStatement);
   const auto *MethodDecl =
       Result.Nodes.getNodeAs<CXXMethodDecl>(MethodDeclaration);
 
+  // In general, it's hard to tell if method call will invalidate container
+  // iterators because it's implementation dependent. Listing all unsafe pairs
+  // (container, method) is exhausting task and do not generalize good to
+  // user-defined containers. Listing all unsafe containers would be better
+  // but would lead to more false positives - std::vector has both safe and
+  // unsafe methods.
+  // To solve this problem we apply following heuristics:
+  // We say that function is likely to invalidate iterators if this function
+  // is not const and container doesn't have function with the same name, same
+  // parameters (except 'this' parameter) but marked as const.
+  // Together with configurable SafeTypes list this check has reasonable number
+  // of false positives and automatically generalizes to user-defined
+  // containers.
   if (HaveEquivalentConstSubstitute(MethodDecl))
     return;
 
   CFG::BuildOptions Options;
 
-  Stmt *ForStmt = const_cast<CXXForRangeStmt *>(MatchedForStatement);
+  // buildCFG takes Stmt* instead of const Stmt* so we need to const_cast
+  // TODO remove this cast and pass MatchedForStatement to buildCFG instead when
+  // buildCFG will be taking const Stmt*.
+  auto *ForStmt = const_cast<CXXForRangeStmt *>(MatchedForStatement);
 
   // Construct a CFG and ExprSequence to find possible sequences of operations.
   const std::unique_ptr<CFG> TheCFG =
       CFG::buildCFG(nullptr, ForStmt, Result.Context, Options);
-  const std::unique_ptr<StmtToBlockMap> BlockMap(
-      new StmtToBlockMap(TheCFG.get(), Result.Context));
+  StmtToBlockMap BlockMap(TheCFG.get(), Result.Context);
 
-  auto *CallCFGBlock = BlockMap->blockContainingStmt(MatchedExpression);
-  auto *IncCFGBlock =
-      BlockMap->blockContainingStmt(MatchedForStatement->getInc());
+  auto *CallCFGBlock = BlockMap.blockContainingStmt(MatchedExpression);
+  auto *ForIncCFGBlock =
+      BlockMap.blockContainingStmt(MatchedForStatement->getInc());
 
   llvm::BitVector Reachable(TheCFG->getNumBlockIDs());
   reachable_code::ScanReachableFromBlock(CallCFGBlock, Reachable);
 
-  if (Reachable[IncCFGBlock->getBlockID()]) {
+  if (Reachable[ForIncCFGBlock->getBlockID()]) {
     diag(MatchedExpression->getLocStart(),
          "this call may lead to iterator invalidation");
   }
