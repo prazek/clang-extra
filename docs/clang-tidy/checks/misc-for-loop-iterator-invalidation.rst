@@ -3,7 +3,7 @@
 misc-for-loop-iterator-invalidation
 ==========================
 
-Find and flag suspicious method calls on objects iterated using
+Finds suspicious method calls on objects iterated using
 C++11 for-range loop. If such call can invalidate iterators then
 behaviour is undefined.
 
