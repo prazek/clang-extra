@@ -32,14 +32,14 @@ const char DefaultSafeTypes[] = "::std::list; ::std::forward_list";
 
 /// \brief Checks if two methods (or overloaded operators) methods of the same
 /// class and have the same names.
-bool HaveEqualNames(const CXXMethodDecl *First, const CXXMethodDecl *Second) {
+bool haveEqualNames(const CXXMethodDecl *First, const CXXMethodDecl *Second) {
   return First->getQualifiedNameAsString() ==
          Second->getQualifiedNameAsString();
 }
 
 /// \brief Checks if two functions have same parameter lists with regard to
 /// types.
-bool HaveSameParameters(const CXXMethodDecl *First,
+bool haveSameParameters(const CXXMethodDecl *First,
                         const CXXMethodDecl *Second) {
   if (First->param_size() != Second->param_size())
     return false;
@@ -51,13 +51,13 @@ bool HaveSameParameters(const CXXMethodDecl *First,
   return true;
 };
 
-/// \brief Checks if class of gien non-const method have method with the same
+/// \brief Checks if class of given non-const method have method with the same
 /// name and parameters but const.
-bool HaveEquivalentConstSubstitute(const CXXMethodDecl *Method) {
+bool hasEquivalentConstSubstitute(const CXXMethodDecl *Method) {
   const auto *Class = Method->getParent();
   for (const auto *M : Class->methods()) {
-    if (M != Method && M->isConst() && HaveEqualNames(Method, M) &&
-        HaveSameParameters(Method, M))
+    if (M != Method && M->isConst() && haveEqualNames(Method, M) &&
+        haveSameParameters(Method, M))
       return true;
   }
   return false;
@@ -114,7 +114,7 @@ void ForLoopIteratorInvalidationCheck::check(
   // Together with configurable SafeTypes list this check has reasonable number
   // of false positives and automatically generalizes to user-defined
   // containers.
-  if (HaveEquivalentConstSubstitute(MethodDecl))
+  if (hasEquivalentConstSubstitute(MethodDecl))
     return;
 
   CFG::BuildOptions Options;
