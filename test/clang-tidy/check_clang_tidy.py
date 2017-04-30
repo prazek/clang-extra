@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 #===- check_clang_tidy.py - ClangTidy Test Helper ------------*- python -*--===#
 #

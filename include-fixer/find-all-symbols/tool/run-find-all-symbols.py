@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 #=- run-find-all-symbols.py - Parallel find-all-symbols runner -*- python  -*-=#
 #

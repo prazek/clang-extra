@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 #===- add_new_check.py - clang-tidy check generator ----------*- python -*--===#
 #
