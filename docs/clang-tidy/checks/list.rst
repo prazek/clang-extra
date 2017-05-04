@@ -74,6 +74,7 @@ Clang-Tidy Checks
    llvm-twine-local
    misc-argument-comment
    misc-assert-side-effect
+   misc-bad-exception-type
    misc-bool-pointer-implicit-conversion
    misc-dangling-handle
    misc-definitions-in-headers
