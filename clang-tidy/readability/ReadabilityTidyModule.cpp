@@ -16,6 +16,7 @@
 #include "DeleteNullPointerCheck.h"
 #include "DeletedDefaultCheck.h"
 #include "ElseAfterReturnCheck.h"
+#include "ForShouldBeWhileCheck.h"
 #include "FunctionSizeCheck.h"
 #include "IdentifierNamingCheck.h"
 #include "ImplicitBoolCastCheck.h"
@@ -54,6 +55,8 @@ public:
         "readability-deleted-default");
     CheckFactories.registerCheck<ElseAfterReturnCheck>(
         "readability-else-after-return");
+    CheckFactories.registerCheck<ForShouldBeWhileCheck>(
+        "readability-for-should-be-while");
     CheckFactories.registerCheck<FunctionSizeCheck>(
         "readability-function-size");
     CheckFactories.registerCheck<IdentifierNamingCheck>(
