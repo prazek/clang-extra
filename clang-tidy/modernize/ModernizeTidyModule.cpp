@@ -24,6 +24,7 @@
 #include "ShrinkToFitCheck.h"
 #include "UseAutoCheck.h"
 #include "UseBoolLiteralsCheck.h"
+#include "UseClampCheck.h"
 #include "UseDefaultMemberInitCheck.h"
 #include "UseEmplaceCheck.h"
 #include "UseEqualsDefaultCheck.h"
@@ -64,6 +65,8 @@ public:
     CheckFactories.registerCheck<UseAutoCheck>("modernize-use-auto");
     CheckFactories.registerCheck<UseBoolLiteralsCheck>(
         "modernize-use-bool-literals");
+    CheckFactories.registerCheck<UseClampCheck>(
+        "modernize-use-clamp");
     CheckFactories.registerCheck<UseDefaultMemberInitCheck>(
         "modernize-use-default-member-init");
     CheckFactories.registerCheck<UseEmplaceCheck>("modernize-use-emplace");

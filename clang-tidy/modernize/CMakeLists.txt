@@ -18,6 +18,7 @@ add_clang_library(clangTidyModernizeModule
   ShrinkToFitCheck.cpp
   UseAutoCheck.cpp
   UseBoolLiteralsCheck.cpp
+  UseClampCheck.cpp
   UseDefaultMemberInitCheck.cpp
   UseEmplaceCheck.cpp
   UseEqualsDefaultCheck.cpp
