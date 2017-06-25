@@ -146,3 +146,15 @@ void foo3(std::vector<int>& v)  {
     // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-iterator-invalidation]
   }
 }
+
+class vector_subclass: public std::vector<int> {
+
+};
+
+void foo4() {
+  vector_subclass v;
+  for (auto x: v) {
+    v.push_back(x);
+    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: this call may lead to iterator invalidation [misc-for-loop-iterator-invalidation]
+  }
+}

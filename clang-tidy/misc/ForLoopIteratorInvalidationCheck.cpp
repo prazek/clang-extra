@@ -51,14 +51,28 @@ bool haveSameParameters(const CXXMethodDecl *First,
   return true;
 };
 
+/// \brief Checks if given method have const equivalent in given class.
+bool hasEquivalentConstSubstituteInCXXRecord(const CXXMethodDecl *Method, const CXXRecordDecl *Record) {
+  for (const auto *M : Record->methods()) {
+    if (M != Method && M->isConst() && haveEqualNames(Method, M) &&
+        haveSameParameters(Method, M))
+      return true;
+  }
+  return false;
+}
+
 /// \brief Checks if class of given non-const method have method with the same
 /// name and parameters but const.
 bool hasEquivalentConstSubstitute(const CXXMethodDecl *Method) {
   const auto *Class = Method->getParent();
-  for (const auto *M : Class->methods()) {
-    if (M != Method && M->isConst() && haveEqualNames(Method, M) &&
-        haveSameParameters(Method, M))
-      return true;
+  if (hasEquivalentConstSubstituteInCXXRecord(Method, Class))
+    return true;
+
+  for (const auto& CXXBaseSpecifier: Class->bases()) {
+    if (const auto *BaseClass = CXXBaseSpecifier.getType()->getAsCXXRecordDecl()) {
+      if (hasEquivalentConstSubstituteInCXXRecord(Method, BaseClass))
+        return true;
+    }
   }
   return false;
 };
