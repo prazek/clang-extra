@@ -8,6 +8,7 @@ add_clang_library(clangTidyMiscModule
   ForwardingReferenceOverloadCheck.cpp
   InvalidatedIteratorsCheck.cpp
   LambdaFunctionNameCheck.cpp
+  InvalidRangeCheck.cpp
   MisplacedConstCheck.cpp
   UnconventionalAssignOperatorCheck.cpp
   BoolPointerImplicitConversionCheck.cpp
