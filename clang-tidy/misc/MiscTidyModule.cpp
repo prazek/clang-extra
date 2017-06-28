@@ -12,6 +12,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "ArgumentCommentCheck.h"
 #include "AssertSideEffectCheck.h"
+#include "BadExceptionTypeCheck.h"
 #include "BoolPointerImplicitConversionCheck.h"
 #include "DanglingHandleCheck.h"
 #include "DefaultNumericsCheck.h"
