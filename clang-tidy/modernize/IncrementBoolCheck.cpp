@@ -69,13 +69,9 @@ void IncrementBoolCheck::check(const MatchFinder::MatchResult &Result) {
   if (MatchedDecl->isPostfix() && !IsLastOperation)
     return;
 
-  bool UseInnerParentheses = Result.Nodes.getNodeAs<ParenExpr>(ParenExprName);
   bool UseOuterParentheses = !IsLastOperation;
 
   std::string Replacement = SubExpr.str();
-  if (UseInnerParentheses)
-    Replacement = "(" + Replacement + ")";
-
   Replacement += " = true";
   if (UseOuterParentheses)
     Replacement = "(" + Replacement + ")";
