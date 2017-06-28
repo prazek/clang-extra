@@ -76,6 +76,7 @@ Clang-Tidy Checks
    misc-assert-side-effect
    misc-bad-exception-type
    misc-bool-pointer-implicit-conversion
+   misc-bool-to-integer-conversion
    misc-dangling-handle
    misc-default-numerics
    misc-definitions-in-headers
@@ -85,9 +86,9 @@ Clang-Tidy Checks
    misc-inaccurate-erase
    misc-incorrect-roundings
    misc-inefficient-algorithm
+   misc-invalid-range
    misc-invalidated-iterators
    misc-lambda-function-name
-   misc-invalid-range
    misc-macro-parentheses
    misc-macro-repeated-side-effects
    misc-misplaced-const

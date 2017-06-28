@@ -14,6 +14,7 @@
 #include "AssertSideEffectCheck.h"
 #include "BadExceptionTypeCheck.h"
 #include "BoolPointerImplicitConversionCheck.h"
+#include "BoolToIntegerConversionCheck.h"
 #include "DanglingHandleCheck.h"
 #include "DefaultNumericsCheck.h"
 #include "DefinitionsInHeadersCheck.h"
@@ -75,6 +76,8 @@ public:
         "misc-assert-side-effect");
     CheckFactories.registerCheck<BadExceptionTypeCheck>(
         "misc-bad-exception-type");
+    CheckFactories.registerCheck<BoolToIntegerConversionCheck>(
+        "misc-bool-to-integer-conversion");
     CheckFactories.registerCheck<DefaultNumericsCheck>("misc-default-numerics");
     CheckFactories.registerCheck<ForwardingReferenceOverloadCheck>(
         "misc-forwarding-reference-overload");

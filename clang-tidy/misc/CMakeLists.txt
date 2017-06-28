@@ -4,6 +4,7 @@ add_clang_library(clangTidyMiscModule
   ArgumentCommentCheck.cpp
   AssertSideEffectCheck.cpp
   BadExceptionTypeCheck.cpp
+  BoolToIntegerConversionCheck.cpp
   DefaultNumericsCheck.cpp
   ForwardingReferenceOverloadCheck.cpp
   InvalidatedIteratorsCheck.cpp
