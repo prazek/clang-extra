@@ -177,8 +177,7 @@ class ConstFuncOutside {
 
 private:
   mutable int field;
-  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'mutable' modifier is unnecessary for field 'field' {{..}}
-  // CHECK-FIXES: {{^  }}int field;
+  // doSomething() is unknown and can modify 'field' constly.
 };
 
 void ConstFuncOutside::doSomethingConst() const {}
